@@ -4,12 +4,18 @@
 \alias{read_mtx}
 \title{import multiple DropSeq-RNA samples using parallelisation
 import expression matrices ... adds metadata from cell names (need to provide the names of the columns) and percentage
-of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names}
+of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names by setting ensmus=T}
 \usage{
-read_mtx(dir, meta_cols = c("Genotype", "Mouse", NA, "Pool"), ensmus = F)
+read_mtx(
+  dir,
+  meta_cols = c("Genotype", "Mouse", NA, "Pool"),
+  ensmus = F,
+  mart,
+  genes_names = NULL
+)
 }
 \description{
 import multiple DropSeq-RNA samples using parallelisation
 import expression matrices ... adds metadata from cell names (need to provide the names of the columns) and percentage
-of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names
+of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names by setting ensmus=T
 }

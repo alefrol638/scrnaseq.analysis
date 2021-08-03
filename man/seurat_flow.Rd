@@ -2,12 +2,7 @@
 % Please edit documentation in R/seurat_flow.R
 \name{seurat_flow}
 \alias{seurat_flow}
-\title{Standard pipeline for seurat processing ... res: resolution for clustering; dim: number of dimensions to use (see ElbowPlot);
-sct:perform SCTransform; magic: Perform imputation by magic? ... not done yet;
-regress: character vector for metadata columns,which should be regressed for (e.g remove batch effects);
-alg: clustering algorithm 1:Louvain 2:multilevel Louvain 3:SLM 4:Leiden(need to be installed);
-low.features:TRUE if you are clustering for low number of genes (e.g CITE or Flow cytometry);
-umap: "uwot"=R umap "umap-learn"= python package(faster, but needs to be installed)}
+\title{Standard pipeline for seurat processing ...}
 \usage{
 seurat_flow(
   x,
@@ -21,14 +16,31 @@ seurat_flow(
   alg = 1,
   low.features = F,
   umap = "uwot",
-  red.space = "pca"
+  red.space = "pca",
+  only.var = T
 )
 }
+\arguments{
+\item{res}{Float, resolution for clustering (see FindClusters)}
+
+\item{dim}{Sequence of integers, Number of dimensions to use (see ElbowPlot)}
+
+\item{sct}{Boolean Perform SCTransform?}
+
+\item{magic}{Boolean, perform imputation by magic? ... not done yet}
+
+\item{regress}{character vector for metadata columns,which should be regressed for (e.g remove batch effects)}
+
+\item{alg}{clustering algorithm 1:Louvain 2:multilevel Louvain 3:SLM 4:Leiden(need to be installed)}
+
+\item{low.features}{TRUE if you are clustering for low number of genes (e.g CITE or Flow cytometry)}
+
+\item{umap}{"uwot"=R umap "umap-learn"= python package(faster, but needs to be installed)}
+
+\item{red.space}{Character vector specifying the reduction space to use for FindNeigbors and RunUMAP}
+
+\item{only.var}{Boolean, should only variable genes returned in scale.data of SCT Assay?}
+}
 \description{
-Standard pipeline for seurat processing ... res: resolution for clustering; dim: number of dimensions to use (see ElbowPlot);
-sct:perform SCTransform; magic: Perform imputation by magic? ... not done yet;
-regress: character vector for metadata columns,which should be regressed for (e.g remove batch effects);
-alg: clustering algorithm 1:Louvain 2:multilevel Louvain 3:SLM 4:Leiden(need to be installed);
-low.features:TRUE if you are clustering for low number of genes (e.g CITE or Flow cytometry);
-umap: "uwot"=R umap "umap-learn"= python package(faster, but needs to be installed)
+Standard pipeline for seurat processing ...
 }

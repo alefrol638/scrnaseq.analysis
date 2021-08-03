@@ -1,7 +1,18 @@
-#' Publication ready plots using ggplot2 ... any other layer can be added to this function by +, when executing
-#' Parameter: y and xlab: axis titles; plot: which plot should be used( basically all geom_ ... possible );
-#' legend: if want to remove use "none";do.facet= should facetting be performed, if yes type in facet the formula as string,
-#' f.e "~Tissues" make separate plots for each tissue
+#' @title Publication ready plots using ggplot2
+#' @description Any other layer can be added to this function by +, when executing
+#' @param obj Data frame, which can be used in ggplot
+#' @param ylab,xlab: axis titles; plot: which plot should be used( basically all geom_ ... possible )
+#' @param plot Any ggplot (f.e geom_boxplot())
+#' @param legend If want to remove use "none"
+#' @param do.facet boolean, should facetting be performed? if yes type in facet the formula as string,
+#' @param facet character, formula for facetting (subplots based on one variable, f.e "~Tissues" make separate plots for each tissue)
+#' @param x.fontsize=15,y.fontsize=15,
+#' @param legend.fontsize,facets.fontsize,facets.rotation,x.rotation,title.fontsize,legend.key.size Formatting options sizes, text rotations ...
+#' @param cluster_colors named character vector ... ColorIDs named with the cluster ID to use for labelling the clusters, if empty the standard ggplot colors will be used
+#' @examples
+#' draw_plot(data.frame,plot=geom_point(),legend="none",do.facet=T,facet=".~Genotype",cluster_colors=custom.colors)
+#' draw_plot(data.frame,plot=geom_point(),legend="none",do.facet=T,facet="Mouse~Genotype",cluster_colors=custom.colors)
+#'
 #' @export
 draw_plot<-function(obj,ylab="y",xlab="x",plot=ggplot2::geom_point(),legend="right",do.facet=F,facet=NULL,x.fontsize=15,y.fontsize=15,
                     legend.fontsize=17,

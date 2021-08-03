@@ -1,6 +1,13 @@
-#' function taken from scripts of Jonas Schrepping/DZNE
-#'
-#'finds QC statistics and summarises the information of multiple samples in one plot
+#' @title Alignment Statistics
+#' @description  finds QC statistics and summarises the information of multiple samples in one plot,function taken from scripts of Jonas Schrepping/DZNE
+#' @param path character, Path to DropSeq results folder , ends with .../output/results
+#' @param subset character vector, Cells to subset for
+#' @param exclude Boolean, if TRUE cells specified in subset will be excluded
+#' @param legend.pos the position of legends ("none", "left", "right", "bottom", "top", or two-element numeric vector)
+#' @param ymax integer, maximal number of counts shown on y-axis
+#' @param title Main title
+#' @examples
+#' align_stats(path="/data/SeqWell/190613/alignment/2020-07-17/output/results",subset=c("CellID1","CellID2"))
 #' @export align_stats
 align_stats <- function(path,subset=F,exclude=F,legend.pos="right",ymax=200000000,title="Read Statistics") {
   fastQC_reads <- read.delim(paste(path,"/reports/fastqc_reads_data/multiqc_fastqc.txt",sep=""), stringsAsFactors = T)

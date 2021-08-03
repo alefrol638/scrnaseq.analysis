@@ -1,4 +1,6 @@
-#' calculates percentage of zeros for each object in a list of seurat objects
+#' @title Calculate Dropout rate
+#' @description calculates percentage of zeros for each object in a list of seurat objects
+#' @param x Seurat Object
 #' @export
 cal_percent_zero <- function(x) {
   expr<-Seurat::GetAssayData(x,slot="data")

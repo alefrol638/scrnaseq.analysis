@@ -22,7 +22,8 @@ draw_plot(
   facets.rotation = 45,
   x.rotation = 90,
   title.fontsize = 16,
-  legend.key.size = 1.5
+  legend.key.size = 1.5,
+  cluster_colors = NULL
 )
 }
 \description{

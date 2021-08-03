@@ -1,11 +1,13 @@
 #' @title determine the optimal number of clusters using Nbclust
 #' find optimal #cluster using NbClust
-#' select index to determine best number of clusters one of: "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw
-#'  if nothing is specified, all of them are used; if only.meta=T will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
-#' ggplot necessities to be included in the function
-#' @importClassesFrom ggplot2 gg
+#' @param x Seurat Object
+#' @param method character, Clustering method, closest coming to Seurat clustering is kmeans
+#' @param index  Character vector, select indeces to determine best number of clusters one of: "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw
+#'  if nothing is specified, all of them are used
+#' @param min.nc,max.nc integer, minimal and maximal number of clusters to calculate for
+#' @param only.metaif will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
 
-setOldClass(c("gg", "ggplot"))
+
 nbclust<-setClass("nbclust", slots=list(full_list = "list",
                                top3 = "character", plots = "list",new.meta="data.frame"))
 #' @exportClass nbclust
