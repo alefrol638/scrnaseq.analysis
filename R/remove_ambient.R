@@ -1,7 +1,9 @@
-#' correct for ambient genes using SoupX...
-#' x:processed SeuratObject; x_raw:SeuratObject containing bad quality cells (before QC processing);
-#' cluster:Cluster identity for each cell (standard will take active Idents from SeuratObject x);
-#' meta.cols:"columns from metadata to keep (see x[[]])... do not keep nCount_RNA and nFeature_RNA... needs to be recalculated
+#' @title Ambient Genes Correction
+#' @description correct for ambient genes using SoupX (github.com/constantAmateur/SoupX)
+#' @param x processed SeuratObject
+#' @param x_raw SeuratObject containing bad quality cells (before QC processing)
+#' @param cluster Cluster identity for each cell (standard will take active Idents from SeuratObject x)
+#' @param meta.cols columns from metadata to keep (see x[[]])... do not keep nCount_RNA and nFeature_RNA... needs to be recalculated
 #' @export
 remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7))
 {

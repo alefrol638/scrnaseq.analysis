@@ -2,9 +2,12 @@
 % Please edit documentation in R/cal_percent_zero.R
 \name{cal_percent_zero}
 \alias{cal_percent_zero}
-\title{calculates percentage of zeros for each object in a list of seurat objects}
+\title{Calculate Dropout rate}
 \usage{
 cal_percent_zero(x)
+}
+\arguments{
+\item{x}{Seurat Object}
 }
 \description{
 calculates percentage of zeros for each object in a list of seurat objects

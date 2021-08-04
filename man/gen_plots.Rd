@@ -2,9 +2,18 @@
 % Please edit documentation in R/gen_plots.R
 \name{gen_plots}
 \alias{gen_plots}
-\title{wrapper for ggplot, in order to use ggplot for plotting multiple plots using lapply}
+\title{Create ggplot}
 \usage{
 gen_plots(col, data, list, xvalue, yvalue)
+}
+\arguments{
+\item{col}{Variable in data to use for color coding}
+
+\item{data}{Dataframe usable with ggplot}
+
+\item{list}{List, where to save the ggplots into}
+
+\item{xvalue, yvalue}{see ggplot documentation}
 }
 \description{
 wrapper for ggplot, in order to use ggplot for plotting multiple plots using lapply

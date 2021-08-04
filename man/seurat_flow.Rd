@@ -2,7 +2,7 @@
 % Please edit documentation in R/seurat_flow.R
 \name{seurat_flow}
 \alias{seurat_flow}
-\title{Standard pipeline for seurat processing ...}
+\title{Standard pipeline for seurat processing}
 \usage{
 seurat_flow(
   x,
@@ -42,5 +42,6 @@ seurat_flow(
 \item{only.var}{Boolean, should only variable genes returned in scale.data of SCT Assay?}
 }
 \description{
-Standard pipeline for seurat processing ...
+Wrapper for Seurat tools. Allows to use different normalisation methods by changing one parameter. Furthermore, changes in dimensionality reduction can be adapted.
+Magic imputation not developed yet.
 }

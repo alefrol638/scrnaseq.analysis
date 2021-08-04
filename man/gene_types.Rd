@@ -2,10 +2,12 @@
 % Please edit documentation in R/gene_types.R
 \name{gene_types}
 \alias{gene_types}
-\title{taken from scripts of Jonas Schrepping/DZNE
-Shows a plot of the distribution of biotypes among the genes in a Seurat object}
+\title{Gene Biotype distribution plot}
 \usage{
 gene_types(seurat_total)
+}
+\arguments{
+\item{seurat_total}{Seurat object}
 }
 \description{
 taken from scripts of Jonas Schrepping/DZNE

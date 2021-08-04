@@ -2,7 +2,7 @@
 % Please edit documentation in R/align_stats.R
 \name{align_stats}
 \alias{align_stats}
-\title{function taken from scripts of Jonas Schrepping/DZNE}
+\title{Alignment Statistics}
 \usage{
 align_stats(
   path,
@@ -13,6 +13,22 @@ align_stats(
   title = "Read Statistics"
 )
 }
+\arguments{
+\item{path}{character, Path to DropSeq results folder , ends with .../output/results}
+
+\item{subset}{character vector, Cells to subset for}
+
+\item{exclude}{Boolean, if TRUE cells specified in subset will be excluded}
+
+\item{legend.pos}{the position of legends ("none", "left", "right", "bottom", "top", or two-element numeric vector)}
+
+\item{ymax}{integer, maximal number of counts shown on y-axis}
+
+\item{title}{Main title}
+}
 \description{
-finds QC statistics and summarises the information of multiple samples in one plot
+finds QC statistics and summarises the information of multiple samples in one plot,function taken from scripts of Jonas Schrepping/DZNE
+}
+\examples{
+align_stats(path="/data/SeqWell/190613/alignment/2020-07-17/output/results",subset=c("CellID1","CellID2"))
 }

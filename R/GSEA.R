@@ -1,9 +1,25 @@
-#' adapted from scripts of Jonas Schrepping/DZNE
-#'  GSEA function
-#'need to execute after every restart, otherwise Error: external pointer is not valid
-#' OrgDb = org.Mm.eg.db::org.Mm.eg.db
-#'
-#' For proper functioning the package clusterProfiler and DOSE are required
+#' @title Gene Set Enrichment Analysis of scRNAseq data
+#' @description Performs a GSEA for clusters, Conditions and Conditions between clusters. The GO,KEGG,DO, MSigDb databases are used.
+#' For DO and MSigDB mouse genes are transformed to human homologues.
+#' OrgDb = org.Mm.eg.db::org.Mm.eg.db need to execute after every restart, otherwise Error: external pointer is not valid.
+#' Furthermore the Marts for translation from gene symbol to ensembl ID and finding homologues need to be loaded prior using this function (for usage see script in https://gitlab.dzne.de/frolova/spg15.git/scripts/Seurat_Flow_AF.Rmd)
+#' the purpose of this function is to use it in foreach loop, in order to look for enrichment in all available databases in parallel (for usage see script in https://gitlab.dzne.de/frolova/spg15.git/scripts/Seurat_Flow_AF.Rmd).
+#' For MSigDb GSEA To use the most up to date databases you might need to download the latest databases from MsigDb (https://www.gsea-msigdb.org/gsea/msigdb/).
+#' The Databases used here were downloaded in July 2021.
+#' Function adapted from scripts of Jonas Schrepping/DZNE.
+#' @param object Seurat Object
+#' @param condition name of column in metadata to use
+#' @param top Number of genes from FindAllMarkers to use for GSEA
+#' @param GeneSets which database to search (possible: GO,DO,KEGG,(from MSigDb:) Hallmark,cannonicalPathways,ImmunoSignatures,(Transcription Factor)Motifs)
+#' @param Gontology more information in clusterprofiler vignette
+#' @param  pCorrection Choose the p-value adjustment method
+#' @param pvalueCutoff,qvalueCutoff set the unadj. or adj. p-value (depending on correction method) and q-value cutoff (FDR corrected)
+#' @param min.pct,logfc.threshold parameters for FindAllMarkers (see manual for further information)
+#' @param total If TRUE, will perform bulk GSEA, not considering single seurat cluster (useful for total comparison between samples, or just for marker genes of the clusters)
+#' @param org more information in clusterprofiler vignette
+#' @param present_genes=background,# character vector, Background genes used for statistical testing: (universe in enricher() function), gene names need first to be translated into ensemblID using biomaRt
+#' @param OrgDb mus musculus database need to be loaded prior to use
+#' @param human_ensembl,mouse_ensembl use useMart("ensembl",dataset="...") to load the human and mouse databases
 #' @export
   GSEA <- function(object,
                    condition ="Genotype",#name of column in metadata to use

@@ -2,9 +2,7 @@
 % Please edit documentation in R/read_mtx.R
 \name{read_mtx}
 \alias{read_mtx}
-\title{import multiple DropSeq-RNA samples using parallelisation
-import expression matrices ... adds metadata from cell names (need to provide the names of the columns) and percentage
-of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names by setting ensmus=T}
+\title{import multiple DropSeq-RNA samples using parallelisation}
 \usage{
 read_mtx(
   dir,
@@ -14,8 +12,19 @@ read_mtx(
   genes_names = NULL
 )
 }
+\arguments{
+\item{dir}{directory with the following structure: sample1/umi/matrix.mtx,genes.tsv,barcodes.tsv}
+
+\item{meta_cols}{character vector, containing column names of the Metadata.
+if the metadata is contained in the cell names, and separated by _, which information is contained at which position.}
+
+\item{ensmus}{Boolean, should ensmus IDs be converted to gene symbols?}
+
+\item{mart}{if ensmus=TRUE, which mart should be used ? (to load mart execute usemaRt())}
+
+\item{genes_names}{character vector containing gene names ... if you do not want to take the genes names from umi/genes.tsv, set the gene names using this variable}
+}
 \description{
-import multiple DropSeq-RNA samples using parallelisation
 import expression matrices ... adds metadata from cell names (need to provide the names of the columns) and percentage
 of zeros for each sample under dataset[[]][,zeros]... it is possible to convert ensmus ids to gene names by setting ensmus=T
 }

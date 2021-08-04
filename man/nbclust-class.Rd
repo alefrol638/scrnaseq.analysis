@@ -5,14 +5,20 @@
 \alias{nbclust-class}
 \alias{nbclust}
 \title{determine the optimal number of clusters using Nbclust
-find optimal #cluster using NbClust
-select index to determine best number of clusters one of: "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw
-if nothing is specified, all of them are used; if only.meta=T will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
-ggplot necessities to be included in the function}
+find optimal #cluster using NbClust}
+\arguments{
+\item{x}{Seurat Object}
+
+\item{method}{character, Clustering method, closest coming to Seurat clustering is kmeans}
+
+\item{index}{Character vector, select indeces to determine best number of clusters one of: "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw
+if nothing is specified, all of them are used}
+
+\item{min.nc, max.nc}{integer, minimal and maximal number of clusters to calculate for}
+
+\item{only.metaif}{will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class}
+}
 \description{
 determine the optimal number of clusters using Nbclust
 find optimal #cluster using NbClust
-select index to determine best number of clusters one of: "kl", "ch", "hartigan", "ccc", "scott", "marriot", "trcovw", "tracew", "friedman", "rubin", "cindex", "db", "silhouette", "duda", "pseudot2", "beale", "ratkowsky", "ball", "ptbiserial", "gap", "frey", "mcclain", "gamma", "gplus", "tau", "dunn", "hubert", "sdindex", "dindex", "sdbw
-if nothing is specified, all of them are used; if only.meta=T will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
-ggplot necessities to be included in the function
 }

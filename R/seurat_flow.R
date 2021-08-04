@@ -1,4 +1,6 @@
-#' Standard pipeline for seurat processing ...
+#' @title Standard pipeline for seurat processing
+#' @description Wrapper for Seurat tools. Allows to use different normalisation methods by changing one parameter. Furthermore, changes in dimensionality reduction can be adapted.
+#'  Magic imputation not developed yet.
 #' @param  res Float, resolution for clustering (see FindClusters)
 #' @param  dim Sequence of integers, Number of dimensions to use (see ElbowPlot)
 #' @param sct Boolean Perform SCTransform?

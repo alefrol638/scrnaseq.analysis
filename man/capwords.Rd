@@ -2,9 +2,14 @@
 % Please edit documentation in R/capwords.R
 \name{capwords}
 \alias{capwords}
-\title{required for Seurat::AddModuleScore(), because often the gene names from other sources are not consisted in case.}
+\title{Capitalise Words}
 \usage{
 capwords(s, strict = FALSE)
+}
+\arguments{
+\item{s}{Character vector with words to be capitalised}
+
+\item{strict}{Boolean, TRUE recommended, since it makes sure that only the first letter is capital and other low case.}
 }
 \description{
 required for Seurat::AddModuleScore(), because often the gene names from other sources are not consisted in case.

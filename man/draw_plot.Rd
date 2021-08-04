@@ -2,10 +2,7 @@
 % Please edit documentation in R/draw_plot.R
 \name{draw_plot}
 \alias{draw_plot}
-\title{Publication ready plots using ggplot2 ... any other layer can be added to this function by +, when executing
-Parameter: y and xlab: axis titles; plot: which plot should be used( basically all geom_ ... possible );
-legend: if want to remove use "none";do.facet= should facetting be performed, if yes type in facet the formula as string,
-f.e "~Tissues" make separate plots for each tissue}
+\title{Publication ready plots using ggplot2}
 \usage{
 draw_plot(
   obj,
@@ -26,9 +23,28 @@ draw_plot(
   cluster_colors = NULL
 )
 }
+\arguments{
+\item{obj}{Data frame, which can be used in ggplot}
+
+\item{ylab, xlab:}{axis titles; plot: which plot should be used( basically all geom_ ... possible )}
+
+\item{plot}{Any ggplot (f.e geom_boxplot())}
+
+\item{legend}{If want to remove use "none"}
+
+\item{do.facet}{boolean, should facetting be performed? if yes type in facet the formula as string,}
+
+\item{facet}{character, formula for facetting (subplots based on one variable, f.e "~Tissues" make separate plots for each tissue)}
+
+\item{legend.fontsize, facets.fontsize, facets.rotation, x.rotation, title.fontsize, legend.key.size}{Formatting options sizes, text rotations ...}
+
+\item{cluster_colors}{named character vector ... ColorIDs named with the cluster ID to use for labelling the clusters, if empty the standard ggplot colors will be used}
+}
 \description{
-Publication ready plots using ggplot2 ... any other layer can be added to this function by +, when executing
-Parameter: y and xlab: axis titles; plot: which plot should be used( basically all geom_ ... possible );
-legend: if want to remove use "none";do.facet= should facetting be performed, if yes type in facet the formula as string,
-f.e "~Tissues" make separate plots for each tissue
+Any other layer can be added to this function by +, when executing
+}
+\examples{
+draw_plot(data.frame,plot=geom_point(),legend="none",do.facet=T,facet=".~Genotype",cluster_colors=custom.colors)
+draw_plot(data.frame,plot=geom_point(),legend="none",do.facet=T,facet="Mouse~Genotype",cluster_colors=custom.colors)
+
 }
