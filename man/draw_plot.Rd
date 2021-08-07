@@ -36,7 +36,7 @@ draw_plot(
 
 \item{facet}{character, formula for facetting (subplots based on one variable, f.e "~Tissues" make separate plots for each tissue)}
 
-\item{legend.fontsize, facets.fontsize, facets.rotation, x.rotation, title.fontsize, legend.key.size}{Formatting options sizes, text rotations ...}
+\item{x.fontsize, y.fontsize, legend.fontsize, facets.fontsize, facets.rotation, x.rotation, title.fontsize, legend.key.size}{Formatting options sizes, text rotations ...}
 
 \item{cluster_colors}{named character vector ... ColorIDs named with the cluster ID to use for labelling the clusters, if empty the standard ggplot colors will be used}
 }

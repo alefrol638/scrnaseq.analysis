@@ -6,8 +6,7 @@
 #' @param legend If want to remove use "none"
 #' @param do.facet boolean, should facetting be performed? if yes type in facet the formula as string,
 #' @param facet character, formula for facetting (subplots based on one variable, f.e "~Tissues" make separate plots for each tissue)
-#' @param x.fontsize=15,y.fontsize=15,
-#' @param legend.fontsize,facets.fontsize,facets.rotation,x.rotation,title.fontsize,legend.key.size Formatting options sizes, text rotations ...
+#' @param x.fontsize,y.fontsize,legend.fontsize,facets.fontsize,facets.rotation,x.rotation,title.fontsize,legend.key.size Formatting options sizes, text rotations ...
 #' @param cluster_colors named character vector ... ColorIDs named with the cluster ID to use for labelling the clusters, if empty the standard ggplot colors will be used
 #' @examples
 #' draw_plot(data.frame,plot=geom_point(),legend="none",do.facet=T,facet=".~Genotype",cluster_colors=custom.colors)

@@ -4,10 +4,12 @@
 \alias{gene_types}
 \title{Gene Biotype distribution plot}
 \usage{
-gene_types(seurat_total)
+gene_types(seurat_total, mart.use)
 }
 \arguments{
 \item{seurat_total}{Seurat object}
+
+\item{mart.use}{create Mart Object using UseMart()}
 }
 \description{
 taken from scripts of Jonas Schrepping/DZNE
