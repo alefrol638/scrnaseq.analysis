@@ -14,7 +14,7 @@ gene_types<-function(seurat_total,mart.use){
   genetypeexpr <- data.frame(SYMBOL=rownames(expr),
                              MEAN=Matrix::rowMeans(expr),
                              SUM=Matrix::rowSums(expr))
-  colnames(transcript_biotypes)<-c("SYMBOL","TYPE")
+  colnames(transcript_biotypes)<-c("SYMBOL","TYPE","Chromosome")
   genetypeexpr<-dplyr::left_join(genetypeexpr,transcript_biotypes)
   # remove outlier with very low expression
   genetypeexpr<-genetypeexpr[genetypeexpr$SUM>1,]

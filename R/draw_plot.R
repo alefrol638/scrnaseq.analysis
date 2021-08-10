@@ -31,6 +31,6 @@ draw_plot<-function(obj,ylab="y",xlab="x",plot=ggplot2::geom_point(),legend="rig
           axis.title=ggplot2::element_text(size=title.fontsize,face="bold"))+
     ggplot2::labs(y=ylab,x=xlab)+
     {if(do.facet)ggplot2::facet_grid(stats::reformulate(facet))}+
-  {if(is.null(cluster_colors))ggplot2::scale_fill_manual(values=cluster_colors)}
+  {if(!is.null(cluster_colors))ggplot2::scale_fill_manual(values=cluster_colors)}
   # geom_text(aes(label =Freq),  position = position_stack(vjust = 0.5),size=2)
 }

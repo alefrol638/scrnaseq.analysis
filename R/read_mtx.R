@@ -37,6 +37,7 @@ read_mtx<-function(dir,meta_cols=c("Genotype","Mouse",NA,"Pool"),ensmus=F,mart,g
 
     if(is.null(genes_names))
     {
+      colnames(genes)<-"external_gene_name"
     mtx@Dimnames[[1]] <- as.character(genes$external_gene_name)
     }else
     {
