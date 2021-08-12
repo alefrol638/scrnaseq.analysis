@@ -1,3 +1,7 @@
+nbclust<-setClass("nbclust", slots=list(full_list = "list",
+                                        top3 = "character", plots = "list",new.meta="data.frame"))
+#' @exportClass nbclust
+
 #' @title determine the optimal number of clusters using Nbclust
 #' find optimal #cluster using NbClust
 #' @param x Seurat Object
@@ -6,11 +10,6 @@
 #'  if nothing is specified, all of them are used
 #' @param min.nc,max.nc integer, minimal and maximal number of clusters to calculate for
 #' @param only.metaif will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
-
-
-nbclust<-setClass("nbclust", slots=list(full_list = "list",
-                               top3 = "character", plots = "list",new.meta="data.frame"))
-#' @exportClass nbclust
 #' @export optimal_n_cluster
 optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min.nc=1,max.nc=15,only.meta=F)
 {
