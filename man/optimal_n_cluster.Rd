@@ -10,7 +10,7 @@ optimal_n_cluster(
   out = new("nbclust"),
   method = "kmeans",
   index = "all",
-  min.nc = 1,
+  min.nc = 2,
   max.nc = 15,
   only.meta = F,
   name.graph = "SCT_snn",

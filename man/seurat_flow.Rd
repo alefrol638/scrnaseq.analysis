@@ -9,7 +9,6 @@ seurat_flow(
   res = 0.7,
   dim = 1:30,
   sct = T,
-  magic = F,
   norm = F,
   do.pca = T,
   regress = NULL,
@@ -17,7 +16,9 @@ seurat_flow(
   low.features = F,
   umap = "uwot",
   red.space = "pca",
-  only.var = T
+  only.var = T,
+  UMIs = T,
+  scale = T
 )
 }
 \arguments{
@@ -26,8 +27,6 @@ seurat_flow(
 \item{dim}{Sequence of integers, Number of dimensions to use (see ElbowPlot)}
 
 \item{sct}{Boolean Perform SCTransform?}
-
-\item{magic}{Boolean, perform imputation by magic? ... not done yet}
 
 \item{regress}{character vector for metadata columns,which should be regressed for (e.g remove batch effects)}
 
@@ -40,6 +39,10 @@ seurat_flow(
 \item{red.space}{Character vector specifying the reduction space to use for FindNeigbors and RunUMAP}
 
 \item{only.var}{Boolean, should only variable genes returned in scale.data of SCT Assay?}
+
+\item{UMIs}{set to FALSE, if you have full transcripts instead of 3' 5' captured (f.e SmartSeq data)}
+
+\item{scale}{should the expression be scaled to unit variance?}
 }
 \description{
 Wrapper for Seurat tools. Allows to use different normalisation methods by changing one parameter. Furthermore, changes in dimensionality reduction can be adapted.
