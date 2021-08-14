@@ -10,8 +10,10 @@ nbclust<-setClass("nbclust", slots=list(full_list = "list",
 #'  if nothing is specified, all of them are used
 #' @param min.nc,max.nc integer, minimal and maximal number of clusters to calculate for
 #' @param only.metaif will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
+#' @param name.graph which neighbor graph should be used? (<name of reduction_snn OR nn>)
+#' @param dims number of dimensions to use for clustering
 #' @export optimal_n_cluster
-optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min.nc=1,max.nc=15,only.meta=F)
+optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min.nc=2,max.nc=15,only.meta=F,name.graph="SCT_snn",dims=1:30)
 {
   if(only.meta==F)
   {
@@ -26,7 +28,7 @@ optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min
 
     out@full_list<-foreach::foreach(i = index_nbclust,.packages = "NbClust",.errorhandling = "pass") %dopar%
       {
-        R.utils::withTimeout({out@full_list[[i]]<-NbClust::NbClust(x@reductions$pca@cell.embeddings[,1:21],diss=x@graphs$SCT_snn,distance=NULL,
+        R.utils::withTimeout({out@full_list[[i]]<-NbClust::NbClust(x@reductions$pca@cell.embeddings[,dims],diss=x@graphs[[name.graph]],distance=NULL,
                                                     method=method,index=i,min.nc = min.nc,max.nc = max.nc)},
                     timeout = 180,cpu=F,onTimeout = "warning")
       }
@@ -50,14 +52,12 @@ optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min
     }
     #extract optimal #clust from each approaches
     nc<-c()
-    for(i in names(out@full_list)){
+    for(i in names(out@full_list)[names(out@full_list)!="hubert"&names(out@full_list)!="dindex"]){
       if(!is.character(out@full_list[[i]]))
-      {attach(out@full_list[[i]])
-        if(exists("Best.nc")){
+      {
           try({nc[i]<-out@full_list[[i]][["Best.nc"]][["Number_clusters"]]})
 
-        }
-        detach() }
+       }
 
     }
 
@@ -77,7 +77,7 @@ optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min
     if(exists("Best.nc")){
       if( out@full_list[[i]][["Best.nc"]][["Number_clusters"]]%in%out@top3)
       {
-        clusters<-grep("^SCT_snn_res\\..*$",names(x[[]]),fixed=F,value = T)
+        clusters<-grep(paste("^",name.graph,"_res\\..*$",sep =""),names(Seurat_objects$integrated[[]]),fixed=F,value = T)
         cluster_n<-c()
         for(j in 1:length(clusters)){
           cluster_n[j]<- length(levels(x@meta.data[,clusters[j]]))

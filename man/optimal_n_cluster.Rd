@@ -12,7 +12,9 @@ optimal_n_cluster(
   index = "all",
   min.nc = 1,
   max.nc = 15,
-  only.meta = F
+  only.meta = F,
+  name.graph = "SCT_snn",
+  dims = 1:30
 )
 }
 \arguments{
@@ -24,6 +26,10 @@ optimal_n_cluster(
 if nothing is specified, all of them are used}
 
 \item{min.nc, max.nc}{integer, minimal and maximal number of clusters to calculate for}
+
+\item{name.graph}{which neighbor graph should be used? (<name of reduction_snn OR nn>)}
+
+\item{dims}{number of dimensions to use for clustering}
 
 \item{only.metaif}{will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class}
 }
