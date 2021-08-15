@@ -77,7 +77,7 @@ optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min
     if(exists("Best.nc")){
       if( out@full_list[[i]][["Best.nc"]][["Number_clusters"]]%in%out@top3)
       {
-        clusters<-grep(paste("^",name.graph,"_res\\..*$",sep =""),names(Seurat_objects$integrated[[]]),fixed=F,value = T)
+        clusters<-grep(paste("^",name.graph,"_res\\..*$",sep =""),names(x[[]]),fixed=F,value = T)
         cluster_n<-c()
         for(j in 1:length(clusters)){
           cluster_n[j]<- length(levels(x@meta.data[,clusters[j]]))
