@@ -23,3 +23,20 @@ require(devtools)
 install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.org")
 
 ```
+
+## Usage
+
+you can browse the vignettes using:
+
+```{r}
+### check all installed vignettes
+browseVignettes("scRNAseq.analysis")
+###have a look at the tutorial html file 
+vignette("Tutorial_scRNAseq_analysis")
+
+###or get the source code for the tutorial vignette
+
+edit(vignette("Tutorial_scRNAseq_analysis"))
+
+
+```
