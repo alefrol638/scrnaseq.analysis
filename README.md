@@ -14,3 +14,12 @@ remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git",
                      credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm"))
 
 ```
+
+if that does not work you probably need to install remotes version 2.3.0:
+
+```{r}
+
+require(devtools)
+install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.org")
+
+```
