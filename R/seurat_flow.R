@@ -21,13 +21,13 @@ seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=
   if(norm==T){
     x <- Seurat::NormalizeData(x)
     if(scale==T)
-    {x<-do.call(Seurat::ScaleData,c(list(x,vars.to.regress = regress),
+    {x<-Gmisc::fastDoCall(Seurat::ScaleData,c(list(x,vars.to.regress = regress),
                                     list(features=rownames(x))[!only.var|low.features]))}
     if(low.features==F)
     {x <- Seurat::FindVariableFeatures(x, selection.method = "vst", nfeatures = 5000)}
   }
   if(do.pca==T){
-    x<-do.call(Seurat::RunPCA,c(list(x),
+    x<-Gmisc::fastDoCall(Seurat::RunPCA,c(list(x),
                                 list(features=rownames(x),approx=F)[low.features],
                                 list(features=VariableFeatures(x))[!low.features]))
   }
