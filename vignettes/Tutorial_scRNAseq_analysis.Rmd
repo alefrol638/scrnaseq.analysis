@@ -1,0 +1,587 @@
+---
+title: "Tutorial_scRNAseq_analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tutorial_scRNAseq_analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Prerequisites
+
+First we need to import Packages required for the Analysis and register multiple Cores for parallel computation.
+
+```{r ,results="hide"}
+library(scRNAseq.analysis)
+library(Seurat)
+ library("tidyr")
+library(cowplot)
+library(ggplot2)
+
+library(clustree)
+library(dplyr)
+library(plyr)
+
+
+doMC::registerDoMC(future::availableCores()*0.5) ###only half, as not to use up all resources, change accordingly, if more power required
+# system.time(fastSave::load.lbzip2(here::here("RImages/SeqWell_myeolid/Exp_191114","full_analysed.RDataFS"),n.cores=100))
+
+###custom color palette for Seurat, number stands for cluster ID without annotation
+my_cols <- c('0'='#006A40FF','1'="goldenrod1",'2'='#75B41EFF','3'='#95828DFF','4'='#708C98FF',
+             '5'='#8AB8CFFF','6'='#007E7FFF','7'='#358359FF','8'='#8BA1BCFF','9'='#5A5895FF',
+             '10'='#F2990CFF','11'='#5A5895FF','12'='#E5BA3AFF',"13"="chartreuse","14"='#F08892FF',"15"="tomato3","16"="seagreen1","17"="wheat4","18"="orange")
+
+my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
+### show the ID of the color 
+
+
+
+```
+
+Then we need to load the Mart datasets to be able to retrieve more information about our genes. 
+
+```{r}
+
+###execute one and save the object 
+mouse_ensembl<-biomaRt::useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+human_ensembl<-biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+
+```
+
+# Import Data 
+
+Then we import the matrices from a DropSeq pipeline output folder:
+
+```{r import data}
+
+ #This path is mounted in Singularity ... to reproduce the results, you can access the data using the following mount in Singularity: --bind /groups/NovaSeq-01/bioinformatics/SeqWell/84_Seq_Beyer_spg15:/data/SeqWell/190613 
+dir_RNA <- "/data/SeqWell/190613/alignment/2020-07-17/output/results/samples/"
+
+###Lets create a list for Seurat objects for better overview
+Seurat_objects<-list()
+Seurat_objects$total<-read_mtx(dir=dir_RNA)
+
+
+```
+
+
+Or import SmartSeq2 Data using import_SS2_kallisto():
+
+```{r SS2_kallisto,eval=F}
+##use ensembl for gene annotation (standard output is in ensembleID, thus we use biomart to convert to human readable gene symbols)
+mouse_ensembl<-biomaRt::useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+###same as above: --bind /groups/NovaSeq-01/bioinformatics/RNA/124_2019_SS2_Beyer_CNS_TCells_210414:/data/SS2/190613
+Seurat_objects$SS2_190613<-import_SS2_kallisto("/data/SS2/190613/alignment/2021-04-15--17-09-37/output/kallisto",mouse_ensembl)
+```
+# Metadata 
+
+The Metadata in our case is directly contained in the Cell name, thus we can just extract it: 
+
+```{r Meta}
+
+meta<-separate(as.data.frame(colnames(Seurat_objects$total)),col = "colnames(Seurat_objects$total)",sep = "_",into=c(NA,"Genotype","Mouse",NA,"Pool"),remove = F)
+rownames(meta)<-meta$`colnames(Seurat_objects$total)`
+meta<-meta[,-1]
+Seurat_objects$total<-AddMetaData(Seurat_objects$total,meta)
+```
+
+We can furthermore add the Percentage of mitochondrial genes: 
+
+```{r percent.mito}
+
+
+###lets first find genes, which are located on the mitochondrial chromosome: 
+mito.genes<-biomaRt::getBM(attributes=c('external_gene_name', 'transcript_biotype',"chromosome_name"),
+                           filters = 'chromosome_name',
+                           values = "MT",
+                           mart = mouse_ensembl)
+##you need to subset first the genes which are actually present in the seurat object
+mito.genes<-mito.genes$external_gene_name[mito.genes$external_gene_name%in%rownames(Seurat_objects$total)]
+##add percentage of this genes
+Seurat_objects$total<-MetaFeature(Seurat_objects$total,features = as.character(mito.genes),meta.name = "percent.mito")
+
+
+```
+# QC 
+
+## Alignment Quality
+First check the alignment quality: 
+
+```{r Alignment_QC}
+
+
+##multiqc statistics
+path_191114<-"/data/SeqWell/191114/alignment/2020-03-13/output/results"
+
+
+
+align_stats(path_191114,subset="ADT",exclude=T,legend.pos = "right",ymax=150000000,title="191114_v2")
+
+```
+
+Here you can see that all the subsamples from our dataset show similar alignment quality. Around 50-70% of the reads were aligned and most of the reads survived filtering, which is an okay quality. The sequencing depth varied slightly, on average a number of reads in the range of 5.0e+07 was observed.
+
+## Composition
+
+We can also check the composition of our transcripts:
+```{r composition}
+
+### To find the biotypes of transcripts a Biomart object is required. Lets use the one from above
+   genetypes_RNA<-gene_types(Seurat_objects$total,mart.use = mouse_ensembl)
+    
+###draw_plot is also a function of cowplot, thus use ::
+    genestype_plot<-scRNAseq.analysis::draw_plot(ggplot(genetypes_RNA,aes(x=TYPE,y=SUM)),xlab="",ylab="Sum over all cells",plot=geom_jitter(height = 0, width = 0.1),legend="none")+scale_y_log10()+coord_flip()
+    
+    genestype_plot
+   
+```
+
+
+You can see that the majority of transcripts are protein coding genes. Other Transcript types may not be very informative, thus we leave them out for clustering and cluster annotation. Furthermore we'll remove ribosomal genes, which are also less informative but highly expressed: 
+
+```{r proteins_only}
+###lets find all genes annotated as rRNA in biomart 
+ribo.genes<-biomaRt::getBM(attributes=c('external_gene_name', 'transcript_biotype',"chromosome_name"),
+                           filters = 'biotype',
+                           values = "rRNA",
+                           mart = mouse_ensembl)
+
+##not all of them are annotated, thus we select based on known terms
+
+ribo.genes <-  c(grep(pattern =c("^Rpl|^Rps|^Mrps|^Mrpl"), x = rownames(Seurat_objects$total),
+                    value = TRUE),ribo.genes$external_gene_name)
+
+#keep protein coding only
+Seurat_objects$filtered<-subset(Seurat_objects$total,features=genetypes_RNA[genetypes_RNA$TYPE=="protein_coding",]$SYMBOL)
+
+###remove ribosomal genes
+filt_genes<-rownames(Seurat_objects$filtered)
+filt_genes<-filt_genes[which(!filt_genes%in%ribo.genes)]
+Seurat_objects$filtered<-subset(Seurat_objects$total,features=filt_genes)
+   
+```
+
+
+## Cells 
+
+Now lets include low quality cells. We start with removing empty wells:
+```{r Cell}
+###save our data in extra object, so we do not loose the previous state, when trying different subsetting criteria.
+dataset<-Seurat_objects$filtered
+
+#UMIs per cell####
+
+  UMIs_cell(seurat_total = dataset,cutoff = 40)
+
+dataset<-subset(dataset,subset = nCount_RNA>40)
+```
+
+
+
+ These are all cells, in which the cell size (rank here) is not proportional to the #UMIs (all cells below red dotted line).
+ 
+ Another posibility to look at the quality of cells is the following plot: 
+ 
+```{r umis_cell_color}
+
+dataset<-subset(dataset,subset=nFeature_RNA>370&nCount_RNA>500)
+ umis_genes_color(dataset)###standard color is finding column in meta.data called "percent.mito" ... adjust accordingly
+ 
+ ###if you are done save the subsetted dataset in our list
+ Seurat_objects$postQC<-dataset
+
+```
+
+
+You should try to remove the tails in the histogram, so that we keep only high quality cells. Here we subsetted for at least 370 genes and 500 Umis.
+No cells with high percent mitochondrial were observed in the lower left quadrant and the mito content is generally low. Thus we do not need to subset for percent.mito.
+
+# Dimensionality Reduction and Clustering 
+
+We still have to exclude doublets and correct for ambient gene expression. But for this steps a first clustering result should be available. Thus we first start with dimensionality reduction and clustering.
+The scRNAseq analysis is split into 3 Parts:
+
+- PCA
+- Find Neighbors
+- UMAP
+- Clustering 
+
+Here we use a wrapper function for all these parts called seurat_flow().
+
+```{r seurat_flow,warnings=F,results="hide"}
+
+
+###with Seurat >4.0 you need to make sure that Matrix <1.3.2 is installed otherwise following error,when executing FindNeighbors(): 
+#Error in validObject(.Object) : 
+  #invalid class “Graph” object: superclass "Mnumeric" not defined in the environment of the object's class
+### use the following commands: 
+# remotes::install_version("Matrix", version = "1.3.2", repos = "http://cran.us.r-project.org")
+
+Seurat_objects$processed<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F) 
+
+```
+
+To determine the number of dimensions to use, check the elbow in ElbowPlot().
+
+## Clustering
+
+We have performed clustering using the standard resolution of 0.7. Let's see if we can make a more educated guess on the number of cluster available in our dataset. \
+To that purpose, two packages can be made use of. The first one is called clustree and it just shows us a graph like comparison between the different clustering resolutions. The resolution is selected at the point, when the clusters (nodes) start to mix up between resolutions (mixed edges).
+
+```{r, clustree}
+
+###First remove previous clustering runs 
+Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("SCT_",names(Seurat_objects$processed[[]]),fixed = T)]
+###perform clustering at resolutions between 0.1 and two in 0.2 steps for example for both Genotypes
+
+
+for(i in seq(0,1,0.1)){
+Seurat_objects$processed <- FindClusters(Seurat_objects$processed, resolution = i)
+}
+
+
+#Clustree is used to select the proper resolution. In the plot, in.props means the number of
+# cells in the edge / number of cells in node where edge is pointing to. If Clusters with a lower 
+# resolution are sharing cell in a higher resolution, this resolution is not adequate. You need to set the prefix for the clusters at
+# different resolutions in the metadata, the general naming is the following: <Assay>_<Clustering_method>_res.
+
+###check the prefix to use in the metadata colnames 
+
+###execute clustree 
+clustree(Seurat_objects$processed, prefix = "SCT_snn_res.")
+DimPlot(Seurat_objects$processed)
+###if only empty wells excluded
+Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.4"]]
+
+```
+
+
+You can see that there are singular mixes in low resolution and from 0.7 there appear to be slightly less stability. Since we still need to do some QC, lets not go into much detail and take for now resolution 0.4, where the clusters were stable for two resolutions.
+For doublet and ambient gene correction, we also need to check if the cluster roughly make sense. So let's just quickly check the umap and marker genes.
+
+
+```{r Marker genes}
+library(dplyr)
+dataset.markers<-list()
+
+dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
+
+top_genes<-list()
+
+###functions used in different packages as well, thus specify dplyr
+
+top_genes$processed<- dataset.markers$processed %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
+                                                              wt = avg_log2FC)
+
+
+plot_grid(DoHeatmap(Seurat_objects$processed, features = top_genes$processed$gene)+NoLegend(),DimPlot(Seurat_objects$processed,label=T)+NoLegend()+NoAxes())
+
+
+```
+You can see, that the cluster are not mixed up and the marker genes make sense.
+
+## Correct Ambient Genes
+
+Ambient genes are especially abundant in droplet or pico-well Sequencing technologies. Thus, it is advisable to perform correction for ambient genes for this dataset (SeqWell, pico-well). \
+To that purpose we can use the tool SoupX (constantAmateur/SoupX). Here a wrapper function is used ... which extracts the count data from our unfiltered raw dataset and the QC post dataset, with preliminary clusters. The clustering beforehand is required for automatic SoupX correction.
+
+```{r}
+#correct for ambient genes
+par(mfrow = c(1,2), xpd=TRUE)
+Seurat_objects$nosoup<-remove_ambient(Seurat_objects$processed,Seurat_objects$filtered)
+mito.genes<-mito.genes[mito.genes%in%rownames(Seurat_objects$nosoup)]
+Seurat_objects$nosoup<-MetaFeature(Seurat_objects$nosoup,mito.genes,"percent.mito")
+plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
+
+```
+
+From this plot we can see, that the maximal estimated contamination fraction is 3%, which lays in the range of expected contamination in SeqWell experiments. \
+
+```{r,warnings=F,results="hide"}
+
+Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="umap-learn")
+#compare ambient gene corrected dataset and unGenotcorrected
+##re-add percent.mito
+
+
+seurat_flow(Seurat_objects$nosoup)
+plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
+```
+
+
+You can already see a huge difference in the QC metrics. It seems that cells with very high number of genes and UMIs mainly contained information about ambient genes. The correction, made also the cells more comparable, bringing them into a similar range. Let's also check the clustering. Here the UMAPs:
+
+```{r}
+dataset.markers$nosoup<-FindAllMarkers(Seurat_objects$nosoup, only.pos = TRUE)
+
+
+top_genes$nosoup<- dataset.markers$nosoup %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
+                                                               wt = avg_log2FC)
+
+plot_grid(DimPlot(Seurat_objects$processed,label=T)+NoLegend()+NoAxes(),DimPlot(Seurat_objects$nosoup,label=T)+NoLegend()+NoAxes(), labels = c("Pre-correction","Post-correction"))
+
+```
+
+You can see that we find more clusters with the same resolution and the clusters found before separate also better after correction. Lets check The marker genes as well: 
+
+```{r}
+
+plot_grid(DoHeatmap(Seurat_objects$processed, features = top_genes$processed$gene)+NoLegend(),DoHeatmap(Seurat_objects$nosoup, features = top_genes$nosoup$gene)+NoLegend(), labels = c("Pre-correction","Post-correction"))
+
+```
+
+The marker genes are similar, although after correction  Nfkbia and Mrc1 appear, which tell us more about the state (Nfkb=Inflammation) and identity (Mrc1 = Macrophage) of certain populations.
+
+## Doublet removal
+
+It is recommended to perform doublet detection separately on each of the present conditions. In our case, we perform the detection on the Genotypes WT and KO. Prior to run the wrapper function for DoubletFinder, the QC for the separate Genotypes might be adjusted slightly and uninformative clusters removed. I will not go here into detail, because the major steps were already explained above:
+```{r,results="hide"}
+Seurat_objects[c("WT","KO")]<-NULL
+Genotypes<-SplitObject(Seurat_objects$nosoup,split.by = "Genotype")
+Seurat_objects<-c(Seurat_objects,Genotypes)
+
+###We needed Genotypes only as a helper variable, so lets remove it again
+rm(Genotypes)
+
+##rerrun seurat for soup corrected genotypes
+
+Seurat_objects[c("WT","KO")]<- llply(.data = Seurat_objects[c("WT","KO")], .fun =seurat_flow,res=.6,dim=1:21,sct=T,alg=1,.parallel = T,.paropts = list(.packages = "Seurat"))
+
+###analyse WT first
+for(i in seq(0.1,1.0,0.1)){
+Seurat_objects$WT<- FindClusters(Seurat_objects$WT, resolution = i)
+}
+
+# clustree(Seurat_objects$WT, prefix = "SCT_snn_res.")
+
+Idents(Seurat_objects$WT)<-Seurat_objects$WT[["SCT_snn_res.0.6"]]
+
+# VlnPlot(Seurat_objects$WT,features = "nCount_RNA")
+Seurat_objects$WT<-subset(Seurat_objects$WT,subset=nCount_RNA>580)
+
+
+# VlnPlot(Seurat_objects$WT,features = "percent.mito")
+
+###analyse KO
+
+for(i in seq(1.0,2.0,0.1)){
+Seurat_objects$KO<- FindClusters(Seurat_objects$KO, resolution = i)
+}
+
+# Seurat_objects$KO@meta.data<-Seurat_objects$KO[[]][,-grep("SCT_",colnames(Seurat_objects$KO[[]]),fixed = T)]
+
+# clustree(Seurat_objects$KO, prefix = "SCT_snn_res.")
+
+Idents(Seurat_objects$KO)<-Seurat_objects$KO[["SCT_snn_res.1.3"]]
+
+# plot_grid(VlnPlot(Seurat_objects$KO,features = "nCount_RNA"),VlnPlot(Seurat_objects$KO,features = "percent.mito"))
+
+Seurat_objects$KO<-subset(Seurat_objects$KO,subset=nCount_RNA>580)
+
+
+  dataset.markers[c("WT","KO")]<-llply(Seurat_objects[c("WT","KO")],FindAllMarkers, only.pos = TRUE,.parallel=T,.paropts = list(.packages="Seurat"))
+    
+    for(i in c("WT","KO")){
+    top_genes[[i]]<- dataset.markers[[i]] %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
+                                                                   wt = avg_log2FC)
+    }
+
+  plot_grid(plot_grid(DoHeatmap(Seurat_objects$KO,top_genes$KO$gene)+NoLegend(),
+DimPlot(Seurat_objects$KO)+NoAxes()),plot_grid(DoHeatmap(Seurat_objects$WT,top_genes$WT$gene)+NoLegend(),
+DimPlot(Seurat_objects$WT)+NoAxes()))
+
+
+
+
+```
+
+So now that we now that our clusters make sense, we can use DoubletFinder.
+
+```{r,results="hide"}
+Seurat_objects$WT<-doublets(Seurat_objects$WT,dim = 1:21)
+
+Seurat_objects$KO<-doublets(Seurat_objects$KO,dim = 1:21)
+
+###the meta col name for doublets might vary slightly, but starts always with "DF.classifications" 
+
+name_doublet_wt<-grep("^DF.classifications_",names(Seurat_objects$WT[[]]),value = T)
+name_doublet_ko<-grep("^DF.classifications_",names(Seurat_objects$KO[[]]),value = T)
+
+###visualise doublets
+
+plot_grid(plot_grid(DimPlot(Seurat_objects$WT,group.by = name_doublet_wt)+labs(title=""),DimPlot(Seurat_objects$WT)),
+plot_grid(DimPlot(Seurat_objects$KO,group.by = name_doublet_ko)+labs(title=""),DimPlot(Seurat_objects$KO)),labels = c("WT","KO"))
+
+
+###lets remove the doublets
+###since we do not know the exact column way, we need to use Fetch data as a workaround
+
+expr <- FetchData(Seurat_objects$WT, vars = name_doublet_wt)
+Seurat_objects$WT <- Seurat_objects$WT[, which(expr == "Singlet")]
+
+expr <- FetchData(Seurat_objects$KO, vars = name_doublet_ko)
+Seurat_objects$KO <- Seurat_objects$KO[, which(expr == "Singlet")]
+
+```
+
+
+The number of doublets is low in this datasets, let's remove the ones which were found.\
+Lets now merge again the corrected Genotypes together: 
+
+```{r}
+###The Genotypes were merged after ambient gene and Doublet removal
+###Error: Error in UseMethod(generic = "DefaultAssay", object = object) : 
+  # no applicable method for 'DefaultAssay' applied to an object of class "NULL" 
+#Thus genotypes are saved intermediately
+WT<-Seurat_objects$WT
+KO<-Seurat_objects$KO
+Seurat_objects$processed<-merge(WT,KO)
+
+###remove the intermediate variables again
+
+rm(WT,KO)
+
+```
+
+
+```{r}
+###WT should always appear at the left side
+ Seurat_objects$processed@meta.data$Genotype<-relevel(as.factor(Seurat_objects$processed@meta.data$Genotype),"WT")
+
+###umap-learn needs to be installed... if error just remove umap="umap-learn"
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.9,dim = 1:21,umap="umap-learn",only.var = F)
+
+```
+
+the Seurat objects take up a lot of space ... lets reduce the size by removing the RNA slot from our postQC objects
+```{r}
+
+names(Seurat_objects[c("WT","KO","nosoup","processed")])
+for(i in c("WT","KO","nosoup")){
+  Seurat_objects[[i]]<-DietSeurat(Seurat_objects[[i]],scale.data = F,assays = "SCT")
+}
+Seurat_objects$processed<-NULL
+```
+
+```{r}
+
+
+plot_grid(DimPlot(Seurat_objects$processed,reduction="umap",group.by = "Genotype")+NoAxes()+NoLegend(),
+DimPlot(Seurat_objects$processed,reduction="umap",group.by = "Mouse")+NoAxes()+NoLegend(),
+DimPlot(Seurat_objects$processed,reduction="umap",group.by = "Pool")+NoAxes()+NoLegend())
+###The cells do not separate according to the genotypes ... thus batch correction or integration not required, Samples seems also to be equally distributed 
+
+names(Seurat_objects$processed[[]])
+#remove all metadata,which is not required anymore
+Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("SCT_",names(Seurat_objects$processed[[]]),fixed = T)]
+# Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("DF.classifications",names(Seurat_objects$processed[[]]),fixed = T)]
+# Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("pANN_",names(Seurat_objects$processed[[]]),fixed = T)]
+DietSeurat
+
+###find optimal #cluster using clustree
+for(i in seq(0.1,1.2,0.1)){
+Seurat_objects$processed<- FindClusters(Seurat_objects$processed, resolution = i)
+}
+
+  clustree(Seurat_objects$processed, prefix = "SCT_snn_res.")
+  
+```
+
+Now that we have are completely QC corrected dataset, Let's use the Nbclust tool to determine the optimal number of clusters. Nbclust performs a validation for the optimal number of cluster, using 33 Tools. The function optimal_n_cluster is a wrapper. It first executes NBclust with all available tools in parallel and then saves the results in class "nbclust": 
+
+```{r Nbclust}
+
+optimal_clusters<-optimal_n_cluster(Seurat_objects$processed,min.nc = 10,max.nc = 25)
+
+optimal_clusters@top3
+
+
+DimPlot(Seurat_objects$processed)
+```
+
+One could sometimes also find plots in optimal_clusters@plots, here it did not work. But the top 3 number of clusters from all the tools ,were 10,14,12 clusters. Together with the results of nbclust, 11 clusters seems to be optimal. Upon visual inspection of the UMAP, further subgroups in the clusters 3,4,5,1 and 9 were found, which we were not able to separate, when considering all cells. For these cells we can perform subclustering:
+
+```{r subcluster}
+###set best resolution
+cluster_ids<-list()
+Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.5"]]
+
+cluster_ids$processed11clusters<-levels(Seurat_objects$processed$SCT_snn_res.0.6)
+
+
+### Visual inspection showed possible subclusters for cluster 3,4,5 ... thus performed subclustering
+   Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "3",graph.name = "SCT_snn")
+   
+   Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
+     Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "4",graph.name = "SCT_snn",res=0.15)
+   Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
+   Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "5",graph.name = "SCT_snn",resolution = 0.15)
+   Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
+      Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "2",graph.name = "SCT_snn",resolution = 0.35)
+   Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
+ 
+DimPlot(Seurat_objects$processed)
+  
+```
+
+Now you can see, that all cluster capture one homogenous cell group in the UMAP (at least visually). Now we can identify the clusters: 
+
+```{r}
+  
+   ###remove Cd8+ cells
+   Seurat_objects$processed<-subset(Seurat_objects$processed,subset=sub.cluster!="8")
+###need to rerun seurat flow after subsetting
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.9,dim = 1:21,umap="umap-learn",only.var = F)
+   ####marker genes
+   dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
+    
+
+    top_genes$processed<- dataset.markers$processed %>% group_by(cluster) %>% top_n(n = 5, 
+                                                                   wt = avg_log2FC)
+Gmisc::fastDoCall
+
+   
+
+    ####rename cluster ####
+cluster_ids$processed <- c("ss_MG","early_NP","int_homeostatic_MG","late_DAM","int_MG","inflam_NP","type_1_DAM","IR_MF","early_DAM","late_MG","homeostatic_MG","inflam._GN","SC","MC","early_MF","IR_DAM")
+
+
+###asign the clusters to be changed, as names to the new cluster identities
+names(cluster_ids$processed) <- levels(Idents(Seurat_objects$processed))
+
+### renamve the clusters based on this named vector 
+Seurat_objects$processed <- RenameIdents(Seurat_objects$processed, cluster_ids$processed)
+#check if the cluster IDs were changed successfully 
+levels(Idents(Seurat_objects$processed))
+    
+##don't forget to rename the color palette for the new cluster names 
+
+names(my_cols)<-levels(Idents(Seurat_objects$processed))
+
+my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
+
+
+   plot_grid(DoHeatmap(Seurat_objects$processed,top_genes$processed$gene,group.colors = my_cols2)+NoLegend(),DimPlot(Seurat_objects$processed,label = T,cols = my_cols2)+NoAxes()+NoLegend())
+```
+
+Since we know the identities of our clusters, we can check the differences between the genotypes, lets first create a Barplot showing the cluster abundances: 
+```{r}
+
+
+```
+
+
+
+
+
