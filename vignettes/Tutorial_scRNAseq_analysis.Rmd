@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 First we need to import Packages required for the Analysis and register multiple Cores for parallel computation.
 
-```{r ,results="hide"}
+```{r setup,results="hide"}
 library(scRNAseq.analysis)
 library(Seurat)
  library("tidyr")
@@ -228,7 +228,8 @@ Here we use a wrapper function for all these parts called seurat_flow().
 ### use the following commands: 
 # remotes::install_version("Matrix", version = "1.3.2", repos = "http://cran.us.r-project.org")
 
-Seurat_objects$processed<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F) 
+###umap-learn need to be installed beforehand, if that doesn't work just remove ,umap="umap-learn"
+Seurat_objects$processed<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F,umap="umap-learn") 
 
 ```
 
@@ -315,7 +316,6 @@ Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="
 ##re-add percent.mito
 
 
-seurat_flow(Seurat_objects$nosoup)
 plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
 ```
 
@@ -356,7 +356,7 @@ rm(Genotypes)
 
 ##rerrun seurat for soup corrected genotypes
 
-Seurat_objects[c("WT","KO")]<- llply(.data = Seurat_objects[c("WT","KO")], .fun =seurat_flow,res=.6,dim=1:21,sct=T,alg=1,.parallel = T,.paropts = list(.packages = "Seurat"))
+Seurat_objects[c("WT","KO")]<- llply(.data = Seurat_objects[c("WT","KO")], .fun =seurat_flow,res=.6,dim=1:21,sct=T,alg=1,umap="umap-learn",.parallel = T,.paropts = list(.packages = "Seurat"))
 
 ###analyse WT first
 for(i in seq(0.1,1.0,0.1)){
@@ -454,25 +454,18 @@ rm(WT,KO)
 
 ```
 
+# Downstream analysis
 
 ```{r}
 ###WT should always appear at the left side
  Seurat_objects$processed@meta.data$Genotype<-relevel(as.factor(Seurat_objects$processed@meta.data$Genotype),"WT")
 
 ###umap-learn needs to be installed... if error just remove umap="umap-learn"
-Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.9,dim = 1:21,umap="umap-learn",only.var = F)
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="umap-learn",only.var = F)
 
 ```
 
-the Seurat objects take up a lot of space ... lets reduce the size by removing the RNA slot from our postQC objects
-```{r}
-
-names(Seurat_objects[c("WT","KO","nosoup","processed")])
-for(i in c("WT","KO","nosoup")){
-  Seurat_objects[[i]]<-DietSeurat(Seurat_objects[[i]],scale.data = F,assays = "SCT")
-}
-Seurat_objects$processed<-NULL
-```
+## Optimal Clusters
 
 ```{r}
 
@@ -487,7 +480,7 @@ names(Seurat_objects$processed[[]])
 Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("SCT_",names(Seurat_objects$processed[[]]),fixed = T)]
 # Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("DF.classifications",names(Seurat_objects$processed[[]]),fixed = T)]
 # Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("pANN_",names(Seurat_objects$processed[[]]),fixed = T)]
-DietSeurat
+
 
 ###find optimal #cluster using clustree
 for(i in seq(0.1,1.2,0.1)){
@@ -510,28 +503,44 @@ optimal_clusters@top3
 DimPlot(Seurat_objects$processed)
 ```
 
-One could sometimes also find plots in optimal_clusters@plots, here it did not work. But the top 3 number of clusters from all the tools ,were 10,14,12 clusters. Together with the results of nbclust, 11 clusters seems to be optimal. Upon visual inspection of the UMAP, further subgroups in the clusters 3,4,5,1 and 9 were found, which we were not able to separate, when considering all cells. For these cells we can perform subclustering:
+One could sometimes also find plots in optimal_clusters@plots, here it did not work. But the top 3 number of clusters from all the tools ,were 10,14,12 clusters. Together with the results of nbclust, 10 clusters seems to be optimal. Upon visual inspection of the UMAP, further subgroups in the clusters 3,4,5,1 and 9 were found, which we were not able to separate, when considering all cells. For these cells we can perform subclustering:
 
-```{r subcluster}
+## Subclustering 
+
+Lets first remove T cells from analysis:
+```{r Tcells}
 ###set best resolution
 cluster_ids<-list()
 Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.5"]]
 
-cluster_ids$processed11clusters<-levels(Seurat_objects$processed$SCT_snn_res.0.6)
+  dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
+    
 
+    top_genes$processed<- dataset.markers$processed %>% group_by(cluster) %>% top_n(n = 5, 
+                                                                   wt = avg_log2FC)
+    
+    DoHeatmap(Seurat_objects$processed,top_genes$processed$gene,group.colors = my_cols2)+NoLegend()
+    
+     ###remove Cd8+ cells
+   Seurat_objects$processed<-subset(Seurat_objects$processed,idents=seq(0,9,1)[-8])
+###need to rerun seurat flow after subsetting
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="umap-learn",only.var = F)
+   ####marker genes
+```
+
+```{r subcluster}
 
 ### Visual inspection showed possible subclusters for cluster 3,4,5 ... thus performed subclustering
-   Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "3",graph.name = "SCT_snn")
-   
+   Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "3",graph.name = "SCT_snn",res=0.25)
    Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
-     Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "4",graph.name = "SCT_snn",res=0.15)
-   Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
-   Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "5",graph.name = "SCT_snn",resolution = 0.15)
+     Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "4",graph.name = "SCT_snn",resolution =0.15)
    Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
       Seurat_objects$processed<-FindSubCluster(Seurat_objects$processed,cluster = "2",graph.name = "SCT_snn",resolution = 0.35)
    Idents(Seurat_objects$processed)<-Seurat_objects$processed$sub.cluster
+
  
-DimPlot(Seurat_objects$processed)
+ 
+DimPlot(Seurat_objects$processed,label=T)
   
 ```
 
@@ -539,22 +548,18 @@ Now you can see, that all cluster capture one homogenous cell group in the UMAP 
 
 ```{r}
   
-   ###remove Cd8+ cells
-   Seurat_objects$processed<-subset(Seurat_objects$processed,subset=sub.cluster!="8")
-###need to rerun seurat flow after subsetting
-Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.9,dim = 1:21,umap="umap-learn",only.var = F)
-   ####marker genes
+  
    dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
     
 
     top_genes$processed<- dataset.markers$processed %>% group_by(cluster) %>% top_n(n = 5, 
                                                                    wt = avg_log2FC)
-Gmisc::fastDoCall
+
 
    
 
     ####rename cluster ####
-cluster_ids$processed <- c("ss_MG","early_NP","int_homeostatic_MG","late_DAM","int_MG","inflam_NP","type_1_DAM","IR_MF","early_DAM","late_MG","homeostatic_MG","inflam._GN","SC","MC","early_MF","IR_DAM")
+cluster_ids$processed <- c("ss_MG","early_NP","int_homeo_MG","homeo_DAM","inflam_DAM","int_MG","int_NP","type_1_MF","CAM","homeo_MG","inflam_MG","inflam._NP","SC","MC","IR_MF","IR_DAM")
 
 
 ###asign the clusters to be changed, as names to the new cluster identities
@@ -572,15 +577,80 @@ names(my_cols)<-levels(Idents(Seurat_objects$processed))
 my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
 
 
+
+
    plot_grid(DoHeatmap(Seurat_objects$processed,top_genes$processed$gene,group.colors = my_cols2)+NoLegend(),DimPlot(Seurat_objects$processed,label = T,cols = my_cols2)+NoAxes()+NoLegend())
 ```
 
+
+## Cluster abundances 
+
 Since we know the identities of our clusters, we can check the differences between the genotypes, lets first create a Barplot showing the cluster abundances: 
+
 ```{r}
+
+####Cluster cell numbers####
+
+###extract frequencies of each seurat clusters splitted into genotypes as table from Seurat object total
+table_cluster<-table(Seurat_objects$processed@active.ident,Seurat_objects$processed$Genotype)
+table_frame<- as.data.frame(table_cluster)
+colnames(table_frame)<-c("Seurat_cluster","Genotype","Freq")
+table_frame$Genotype<-relevel(table_frame$Genotype,"WT")
+
+####required for the total cell number labels in the plot later
+table_geno<-table(Seurat_objects$processed$Genotype)
+table_geno<- as.data.frame(table_geno)
+table_geno$Seurat_cluster<-"act. MG"
+colnames(table_geno)<-c("Genotype","Freq","Seurat_cluster")
+table_geno$Genotype<-relevel(table_geno$Genotype,"WT")
+
+
+#####relative cell numbers 
+
+
+##compare Genotype 
+
+###total cell numbers
+props_total_t<-table_geno%>%dplyr::group_by(Genotype)%>%dplyr::mutate(total=sum(Freq),prop=sum(Freq/sum(Freq)))
+
+### cell percentage for each cluster
+
+props_total_g<-table_frame%>%dplyr::group_by(Genotype)%>%dplyr::mutate(prop=Freq / sum(Freq))
+props_total_g<-as.data.frame(props_total_g)
+
+
+plot_list_g<-list()
+ plot_list_g<-sapply(colnames(props_total_g),gen_plots,data=props_total_g,list=plot_list_g,xvalue="Genotype",yvalue="prop")
+ # names(plot_list_g)<-colnames(props_total_g)
+ ##we need only the plot for the clusters splitted into genotypes
+ plot_list_g<-plot_list_g[c(1)]
+ 
+ graph_list_g<-list()
+ ###you need to have the same number colors for the clusters otherwise NA will be shown 
+ my_cols2<-my_cols2[-c(17,18,19)]
+ graph_list_g<-lapply(plot_list_g,scRNAseq.analysis::draw_plot,ylab="rel. Abundance",xlab="",plot=geom_col(),cluster_colors = my_cols2)
+###plot with percentages and absolute cell numbers across genotypes and cell clusters 
+cluster_abs<-graph_list_g$Seurat_cluster.col+geom_text(aes(label =paste(Freq,"cells",sep=" ")),  position = position_stack(vjust = 0.5),size=5)+geom_text(data=props_total_t,aes(label =total,y=prop,x=Genotype),   vjust = -.25,size=6)
+
+# saveRDS(cluster_abs,here::here("figures","cluster_abs.RDS"))
+plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype"),DimPlot(Seurat_objects$processed,cols = my_cols2,label=T)+NoLegend(),cluster_abs)
+
 
 
 ```
 
+## GSEA 
+
+
+
+```{r,eval=F}
+
+names(Seurat_objects[c("WT","KO","nosoup","processed")])
+for(i in c("WT","KO","nosoup")){
+  Seurat_objects[[i]]<-DietSeurat(Seurat_objects[[i]],scale.data = F,assays = "SCT")
+}
+Seurat_objects$processed<-NULL
+```
 
 
 

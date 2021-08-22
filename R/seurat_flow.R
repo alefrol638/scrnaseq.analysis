@@ -27,12 +27,11 @@ seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=
     {x <- Seurat::FindVariableFeatures(x, selection.method = "vst", nfeatures = 5000)}
   }
   if(do.pca==T){
-    x<-Gmisc::fastDoCall(Seurat::RunPCA,c(list(x),
-                                list(features=rownames(x),approx=F)[low.features],
-                                list(features=VariableFeatures(x))[!low.features]))
+    if(low.features){
+    x<-Seurat::RunPCA(x,features=rownames(x),approx=F)
+  }else{x<-Seurat::RunPCA(x,features=VariableFeatures(x))}
   }
   x  <- Seurat::FindNeighbors(x, dims = dim,reduction=red.space)
   x  <- Seurat::FindClusters(x,resolution = res,algorithm=alg)
   x  <- Seurat::RunUMAP(x ,dims=dim,umap.method=umap,reduction=red.space)
 }
-

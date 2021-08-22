@@ -132,7 +132,7 @@
     # geneClusters=formula_cluster used when do.MSigDb
     # readable=T only used when genes_read=T
     #  and so on ...
-    results[[GeneSets]]<-do.call(clusterProfiler::compareCluster,c(list(geneClusters=formula_tot)[total],
+    results[[GeneSets]]<-Gmisc::fastDoCall(clusterProfiler::compareCluster,c(list(geneClusters=formula_tot)[total],
                                                   list(geneClusters=formula_cluster)[!total],
                                                   list(TERM2GENE=gene_set)[do.MSigDb],
                                                   list(data=top,fun=enricher,universe=universe,
