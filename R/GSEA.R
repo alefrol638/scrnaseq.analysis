@@ -112,8 +112,12 @@
     # setting and formatting parameters for GSEA function
     formula_tot<-stats::reformulate(response=ifelse(GeneSets=="GO"|GeneSets=="KEGG","ENTREZID","entrez_h"),termlabels ="cluster")
     formula_cluster<-stats::reformulate(response=ifelse(GeneSets=="GO"|GeneSets=="KEGG","ENTREZID","entrez_h"),termlabels ="cluster+Condition")
-    enricher<-ifelse(GeneSets=="GO"|GeneSets=="KEGG"|GeneSets=="DO",paste("enrich",GeneSets,sep=""),"enricher")
-    do.MSigDb<-ifelse(enricher=="enricher",T,F)
+    enricher<-ifelse(GeneSets=="GO"|GeneSets=="KEGG"|GeneSets=="DO",paste("clusterProfiler::","enrich",GeneSets,sep=""),
+                     "clusterProfiler::enricher")
+    if(GeneSets=="DO"){
+      enricher<-"DOSE::enrichDO"
+    }
+    do.MSigDb<-ifelse(enricher=="clusterProfiler::enricher",T,F)
     genes_read<-ifelse(GeneSets=="GO"|GeneSets=="DO",T,F)
     if(GeneSets=="GO"|GeneSets=="KEGG"){
       universe<-present_genes$ENTREZID
@@ -132,7 +136,7 @@
     # geneClusters=formula_cluster used when do.MSigDb
     # readable=T only used when genes_read=T
     #  and so on ...
-    results[[GeneSets]]<-Gmisc::fastDoCall(clusterProfiler::compareCluster,c(list(geneClusters=formula_tot)[total],
+    results[[GeneSets]]<-do.call(clusterProfiler::compareCluster,c(list(geneClusters=formula_tot)[total],
                                                   list(geneClusters=formula_cluster)[!total],
                                                   list(TERM2GENE=gene_set)[do.MSigDb],
                                                   list(data=top,fun=enricher,universe=universe,

@@ -17,7 +17,6 @@ Imports:
         NbClust,
         ggplot2,
         Seurat(>= 4.0.2),
-        doMC,
         parallel,
         foreach,
         SoupX,
@@ -30,7 +29,7 @@ Imports:
         biomaRt,
         ggExtra,
         clusterProfiler,
-        Gmisc
+        DOSE
 Depends: 
     R (>= 2.10)
 Suggests: 

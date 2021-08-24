@@ -10,7 +10,8 @@
 #' @export
 Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F){
   # define custom color for conditions
-  if(do.col==T)
+ geno_col<-NULL
+   if(do.col==T)
   {
     geno_col <- x[,Condition]
     names(geno_col)<-geno_col

@@ -26,12 +26,14 @@ library(Seurat)
  library("tidyr")
 library(cowplot)
 library(ggplot2)
-
+library(org.Mm.eg.db)
 library(clustree)
 library(dplyr)
 library(plyr)
-
-
+library(foreach)
+library(clusterProfiler)
+library(biomaRt)
+library(DOSE)
 doMC::registerDoMC(future::availableCores()*0.5) ###only half, as not to use up all resources, change accordingly, if more power required
 # system.time(fastSave::load.lbzip2(here::here("RImages/SeqWell_myeolid/Exp_191114","full_analysed.RDataFS"),n.cores=100))
 
@@ -229,7 +231,7 @@ Here we use a wrapper function for all these parts called seurat_flow().
 # remotes::install_version("Matrix", version = "1.3.2", repos = "http://cran.us.r-project.org")
 
 ###umap-learn need to be installed beforehand, if that doesn't work just remove ,umap="umap-learn"
-Seurat_objects$processed<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F,umap="umap-learn") 
+Seurat_objects$postQC<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F,umap="umap-learn") 
 
 ```
 
@@ -243,12 +245,12 @@ To that purpose, two packages can be made use of. The first one is called clustr
 ```{r, clustree}
 
 ###First remove previous clustering runs 
-Seurat_objects$processed@meta.data<-Seurat_objects$processed[[]][,-grep("SCT_",names(Seurat_objects$processed[[]]),fixed = T)]
+Seurat_objects$postQC@meta.data<-Seurat_objects$postQC[[]][,-grep("SCT_",names(Seurat_objects$postQC[[]]),fixed = T)]
 ###perform clustering at resolutions between 0.1 and two in 0.2 steps for example for both Genotypes
 
 
 for(i in seq(0,1,0.1)){
-Seurat_objects$processed <- FindClusters(Seurat_objects$processed, resolution = i)
+Seurat_objects$postQC <- FindClusters(Seurat_objects$postQC, resolution = i)
 }
 
 
@@ -260,10 +262,10 @@ Seurat_objects$processed <- FindClusters(Seurat_objects$processed, resolution = 
 ###check the prefix to use in the metadata colnames 
 
 ###execute clustree 
-clustree(Seurat_objects$processed, prefix = "SCT_snn_res.")
-DimPlot(Seurat_objects$processed)
+clustree(Seurat_objects$postQC, prefix = "SCT_snn_res.")
+DimPlot(Seurat_objects$postQC)
 ###if only empty wells excluded
-Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.4"]]
+Idents(Seurat_objects$postQC)<-Seurat_objects$postQC[["SCT_snn_res.0.4"]]
 
 ```
 
@@ -276,17 +278,17 @@ For doublet and ambient gene correction, we also need to check if the cluster ro
 library(dplyr)
 dataset.markers<-list()
 
-dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
+dataset.markers$postQC<-FindAllMarkers(Seurat_objects$postQC)
 
 top_genes<-list()
 
 ###functions used in different packages as well, thus specify dplyr
 
-top_genes$processed<- dataset.markers$processed %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
+top_genes$postQC<- dataset.markers$postQC %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
                                                               wt = avg_log2FC)
 
 
-plot_grid(DoHeatmap(Seurat_objects$processed, features = top_genes$processed$gene)+NoLegend(),DimPlot(Seurat_objects$processed,label=T)+NoLegend()+NoAxes())
+plot_grid(DoHeatmap(Seurat_objects$postQC, features = top_genes$postQC$gene)+NoLegend(),DimPlot(Seurat_objects$postQC,label=T)+NoLegend()+NoAxes())
 
 
 ```
@@ -300,7 +302,7 @@ To that purpose we can use the tool SoupX (constantAmateur/SoupX). Here a wrappe
 ```{r}
 #correct for ambient genes
 par(mfrow = c(1,2), xpd=TRUE)
-Seurat_objects$nosoup<-remove_ambient(Seurat_objects$processed,Seurat_objects$filtered)
+Seurat_objects$nosoup<-remove_ambient(Seurat_objects$postQC,Seurat_objects$filtered)
 mito.genes<-mito.genes[mito.genes%in%rownames(Seurat_objects$nosoup)]
 Seurat_objects$nosoup<-MetaFeature(Seurat_objects$nosoup,mito.genes,"percent.mito")
 plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
@@ -316,7 +318,7 @@ Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="
 ##re-add percent.mito
 
 
-plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
+plot_grid(umis_genes_color(Seurat_objects$postQC),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
 ```
 
 
@@ -329,7 +331,7 @@ dataset.markers$nosoup<-FindAllMarkers(Seurat_objects$nosoup, only.pos = TRUE)
 top_genes$nosoup<- dataset.markers$nosoup %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = 5, 
                                                                wt = avg_log2FC)
 
-plot_grid(DimPlot(Seurat_objects$processed,label=T)+NoLegend()+NoAxes(),DimPlot(Seurat_objects$nosoup,label=T)+NoLegend()+NoAxes(), labels = c("Pre-correction","Post-correction"))
+plot_grid(DimPlot(Seurat_objects$postQC,label=T)+NoLegend()+NoAxes(),DimPlot(Seurat_objects$nosoup,label=T)+NoLegend()+NoAxes(), labels = c("Pre-correction","Post-correction"))
 
 ```
 
@@ -337,7 +339,7 @@ You can see that we find more clusters with the same resolution and the clusters
 
 ```{r}
 
-plot_grid(DoHeatmap(Seurat_objects$processed, features = top_genes$processed$gene)+NoLegend(),DoHeatmap(Seurat_objects$nosoup, features = top_genes$nosoup$gene)+NoLegend(), labels = c("Pre-correction","Post-correction"))
+plot_grid(DoHeatmap(Seurat_objects$postQC, features = top_genes$postQC$gene)+NoLegend(),DoHeatmap(Seurat_objects$nosoup, features = top_genes$nosoup$gene)+NoLegend(), labels = c("Pre-correction","Post-correction"))
 
 ```
 
@@ -355,8 +357,9 @@ Seurat_objects<-c(Seurat_objects,Genotypes)
 rm(Genotypes)
 
 ##rerrun seurat for soup corrected genotypes
-
-Seurat_objects[c("WT","KO")]<- llply(.data = Seurat_objects[c("WT","KO")], .fun =seurat_flow,res=.6,dim=1:21,sct=T,alg=1,umap="umap-learn",.parallel = T,.paropts = list(.packages = "Seurat"))
+###do not use umap-learn when performing seurat_flow in parallel, otherwise error: 
+#  Terminating: fork() called from a process already using GNU OpenMP, this is unsafe.
+Seurat_objects[c("WT","KO")]<- llply(.data = Seurat_objects[c("WT","KO")], .fun =seurat_flow,res=.6,dim=1:21,sct=T,alg=1,.parallel = T,.paropts = list(.packages = "Seurat"))
 
 ###analyse WT first
 for(i in seq(0.1,1.0,0.1)){
@@ -546,7 +549,7 @@ DimPlot(Seurat_objects$processed,label=T)
 
 Now you can see, that all cluster capture one homogenous cell group in the UMAP (at least visually). Now we can identify the clusters: 
 
-```{r}
+```{r annotation}
   
   
    dataset.markers$processed<-FindAllMarkers(Seurat_objects$processed)
@@ -559,7 +562,7 @@ Now you can see, that all cluster capture one homogenous cell group in the UMAP 
    
 
     ####rename cluster ####
-cluster_ids$processed <- c("ss_MG","early_NP","int_homeo_MG","homeo_DAM","inflam_DAM","int_MG","int_NP","type_1_MF","CAM","homeo_MG","inflam_MG","inflam._NP","SC","MC","IR_MF","IR_DAM")
+cluster_ids$processed <- c("ss_MG","early_NP","int_homeo_MG","homeo_DAM","inflam_DAM","int_MG","int_NP","type_1_MF","CAM","homeo_MG","inflam_MG","inflam_NP","SC","MC","IR_MF","IR_DAM")
 
 
 ###asign the clusters to be changed, as names to the new cluster identities
@@ -587,7 +590,7 @@ my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
 
 Since we know the identities of our clusters, we can check the differences between the genotypes, lets first create a Barplot showing the cluster abundances: 
 
-```{r}
+```{r abundance}
 
 ####Cluster cell numbers####
 
@@ -639,9 +642,262 @@ plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype"),DimPlot(Seurat
 
 ```
 
-## GSEA 
+## DE Genes & GSEA
 
 
+First we need to extract all genes in the dataset and translate them into EntrezID, this genes will than be used as background for significance testing in the GSEA function:
+```{r GSEA}
+
+###need to execute after every restart, otherwise Error: external pointer is not valid
+OrgDb = org.Mm.eg.db
+
+
+###prepare background genes
+###select all genes in dataset ... required for stastitical testing ... see "universe" in enricher()
+#TODO: Try using only the genes found in the cluster as background, at least for comparing the genotypes
+   background <- as.matrix(GetAssayData(object = Seurat_objects$processed, slot = 'counts'))
+  background <- rownames(background[apply(background, 1, function (x) {sum(x >= 1)})>3,])
+  background <- bitr(background, fromType = "SYMBOL", toType="ENTREZID", OrgDb=OrgDb)
+  
+  
+   ### Get human homologues for mouse genes 
+    background_hsa <- getLDS(attributes = c("entrezgene_id"), 
+                                                       filters = "entrezgene_id", 
+                                                       values = background$ENTREZID, 
+                                                       mart = mouse_ensembl, 
+                                                       attributesL = c("entrezgene_id"), 
+                                                       martL =human_ensembl, 
+                                                       uniqueRows=T)
+    
+     
+    colnames(background_hsa)<-c("entrez_m","entrez_h")
+  background_hsa$entrez_m<-as.character(background_hsa$entrez_m)
+   background_hsa$entrez_h<-as.character(background_hsa$entrez_h)
+  
+  background<-left_join(background,background_hsa,by=c("ENTREZID"="entrez_m"))
+  ##background_hsa was just a helper variable, so lets remove it
+rm(background_hsa)
+
+
+
+
+```
+
+
+In single cell experiments, there are multiple possibilites, which genes to take for GSEA. First, the marker genes of the single cell clusters can be used to confirm our annotation. Seurat::FindMarkers() will be used on the condition variable, which is in our case the cell clusters, total is set to TRUE, so that the Idents are only considered once.\
+There are 5 available databases "GO","KEGG","DO","Hallmark","cannonicalPathways","Motifs","ImmunoSignatures". Lets take all of them and perform GSEA in parallel using foreach :
+
+```{r}
+###perform scRNAseq.analysis::GSEA for all available databases, the results will be saved in list called ontology
+
+
+###scRNAseq.analysis::GSEA no differential expression between genotypes
+
+###perform GSEA for all available databases, the results will be saved in list called ontology
+ontology<-list()
+
+
+ontology_db<-c("GO","KEGG","DO","Hallmark","cannonicalPathways","Motifs","ImmunoSignatures")
+
+Seurat_objects$processed$seurat_clusters<-Idents(Seurat_objects$processed)
+ontology[["nogeno"]]<-NULL
+ontology[["nogeno"]]<-foreach(i=ontology_db,.errorhandling = "remove",.combine=c,.multicombine = T) %dopar% {
+R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "seurat_clusters",top = 50,GeneSets = i,total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)},
+                    timeout = 180,cpu=F,onTimeout = "silent")
+
+}
+
+###Here Seurat_objects$processed is my final seurat object 
+###sometimes GO doesn't work in parallel, just run scRNAseq.analysis::GSEA in one core mode and it should be fine
+ontology$nogeno["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "Genotype",top = 50,GeneSets = "GO",total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)
+```
+
+
+Furthermore, DE genes between Genotypes can be used for GSEA. Here our condition is the Genotype meta data variable, and total=T needs to be set, so that the single cell clusters are not considered in the analysis:
+```{r}
+
+
+
+### make scRNAseq.analysis::GSEA for the total cells (all clusters together) comparing WT and KO, if nothing found will be ignored (.errorhandling=remove) ... if you want to see the errormessage set .errorhandling="pass"
+
+ontology[["total"]]<-NULL
+ontology[["total"]]<-foreach(i=ontology_db,.errorhandling="remove",.combine=c,.multicombine = T) %dopar% {
+  R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "Genotype",top = 50,GeneSets = i,total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)},
+                    timeout = 180,cpu=F,onTimeout = "silent")
+
+    
+}
+
+
+
+```
+
+Finally, the DE Genes between Genotypes in each clustered can be used for GSEA, by setting total=F:
+```{r}
+###Then scRNAseq.analysis::GSEA for each cluster individually
+ontology[["cluster"]]<-NULL
+ontology[["cluster"]]<-foreach(i=ontology_db,.errorhandling = "remove",.combine=c,.multicombine = T) %dopar% {
+ R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "Genotype",top = 50,GeneSets = i,total = F,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)},
+                    timeout = 180,cpu=F,onTimeout = "silent")
+  
+}
+
+###Here Seurat_objects$processed is my final seurat object 
+###sometimes GO doesn't work in parallel, just run scRNAseq.analysis::GSEA in one core mode and it should be fine
+ontology$cluster["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "Genotype",top = 50,GeneSets = "GO",total = F,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)
+
+
+```
+
+Lets only put WT on the left side of the plot: 
+```{r}
+
+###relevel the genotype, so that WT appears on left side 
+for(i in ontology_db){
+ontology[["total"]][[i]]@compareClusterResult[["cluster"]]<-as.factor(ontology[["total"]][[i]]@compareClusterResult[["cluster"]])
+ontology[["total"]][[i]]@compareClusterResult[["cluster"]]<-relevel(ontology[["total"]][[i]]@compareClusterResult[["cluster"]],"WT")
+}
+
+for(i in ontology_db){
+ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]]<-as.factor(ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]])
+ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]]<-relevel(ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]],"WT")
+}
+
+```
+We created now only GSEA objects. To visualise the results dotplot can be used, here we can create a list of ggplots, so that we don't need to run ggplot for each database:
+```{r}
+### Create dotplots 
+###create dotplots for all the ontologies created above 
+ontology_plots<-list()
+
+ontology_plots[["total"]]<-foreach(i=names(ontology$total),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
+  
+  ontology_plots[[i]]<-clusterProfiler::dotplot(ontology$total[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+  
+  return(ontology_plots)
+}
+
+###create dot plots in separate plots for WT and KO 
+plots<-list()
+ontology_plots[["cluster"]]<-NULL
+ontology_plots[["cluster"]]<-foreach(i=names(ontology$cluster),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
+  
+ plots[[i]]<-dotplot(ontology$cluster[[i]],x=~cluster,show=5)+facet_wrap(~Condition)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+  
+  return(plots)
+}
+
+####create dotplot without comparing genotypes for each cluster
+
+
+plots<-list()
+ontology_plots[["nogeno"]]<-NULL
+ontology_plots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
+  
+ plots[[i]]<-dotplot(ontology$nogeno[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+  
+  return(plots)
+}
+```
+
+Using plot_grid, multiple results dotplots can be visualised at once. For each type of marker genes we used, an entry in the ontology_plots list was created. The next level in the list are the single databases, they can be accessed by name or position:
+```{r}
+###plot all in one: probably too much, thus need to subset: here only plot 7 will be plotted
+levels(Idents(Seurat_objects$processed))
+plot_grid(plotlist = ontology_plots$nogeno["GO"])
+plot_grid(plotlist = ontology_plots$total[c("KEGG","DO")])
+plot_grid(plotlist = ontology_plots$cluster[c(1:3)])
+
+```
+
+In the same way, a network visualisation can be used:
+```{r}
+###for visualisation as a network package enrichplot required
+library(enrichplot)
+
+
+###same as above but visualisation as emaplot(network)
+
+emaplots<-list()
+
+emaplots[["total"]]<-foreach(i=names(ontology$total),.packages = c("clusterProfiler"),.combine=c,.multicombine=T,.errorhandling = "remove")%dopar%{
+  
+  emaplots[[i]]<-emapplot(pairwise_termsim(ontology$total[[i]]),showCategory = 15)
+  
+  return(emaplots)
+}
+
+
+emaplots[["cluster"]]<-NULL
+plots<-list()
+emaplots[["cluster"]]<-foreach(i=names(ontology$cluster),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
+  
+  plots[[i]]<-emapplot(pairwise_termsim(ontology$cluster[[i]]),showCategory = 15)
+  
+  return(plots)
+}
+
+plots<-list()
+emaplots[["nogeno"]]<-NULL
+emaplots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
+  
+  plots[[i]]<-emapplot(pairwise_termsim(ontology$nogeno[[i]]),showCategory = 15)
+  return(plots)
+  
+}
+
+plot_grid(plotlist = emaplots$nogeno["GO"])
+
+```
+
+```{r}
+####Volcano Plots ####
+
+tmp<-Seurat_objects$processed
+
+dataset.markers$cluster<-list()
+for (i in levels(Idents(tmp))){
+  print(i)
+  tmp2<-subset(tmp,idents=i)
+  Idents(object = tmp2) <- tmp2[[]][,"Genotype"]
+  
+  
+  
+  dataset.markers$cluster[[i]] <-FindMarkers(object = tmp2,ident.1 = "KO",ident.2 = "WT")
+  # colnames(dataset.markers$cluster[[i]])[6]<-"Condition"
+  dataset.markers$cluster[[i]]$cluster<-as.factor(i)
+
+}
+# dataset.markers$cluster<-do.call(rbind,dataset.markers$cluster)
+#  dataset.markers$cluster %>% group_by(cluster,Condition) %>% top_n(n = 50, wt = avg_log2FC) -> top
+Volcano_plots<-list()
+
+###create list of volcano plots 
+dataset.markers$cluster$ss_MG$cluster
+Volcano_plots<-llply(dataset.markers$cluster,Volcano_plot,do.col=F,Condition="cluster",FC_cutoff=0.25,p_cutoff=1e-02,legend="none",.parallel = T,.paropts = list(.packages = "EnhancedVolcano"))
+
+Volcano_plots$cycling<-Volcano_plot(dataset.markers$cluster$cycling,FC_cutoff=0.25,p_cutoff=1e-03,legend="right")
+
+Volcano_plots$CAM<-Volcano_plot(dataset.markers$cluster$CAM,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
+
+Volcano_plots$DAM_MG<-Volcano_plot(dataset.markers$cluster$DAM_MG,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
+
+Volcano_plots$MG<-Volcano_plot(dataset.markers$cluster$MG,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
+names(Volcano_plots)<-names(dataset.markers$cluster)
+
+Volcano_plots<-Volcano_plots[-c("inflam_DAM","type_1_MF","inflam_NP")]
+
+plot_grid(plotlist = Volcano_plots)
+##visualise all at once 
+  table_cluster<-table(dataset@active.ident,dataset$Genotype)
+  plot_grid(plotlist=Volcano_plots$nosoup[1],labels=names(Volcano_plots$nosoup)[1])
+  plot_grid(DimPlot(dataset,split.by="Genotype"),DimPlot(dataset))
+  
+  dataset<-Seurat_objects$processed
+  
+  cluster_marker_genes<-list()
+
+```
 
 ```{r,eval=F}
 
