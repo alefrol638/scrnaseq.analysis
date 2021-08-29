@@ -4,12 +4,14 @@
 \alias{umis_genes_color}
 \title{Scatterplot: #UMIs/cell vs. #genes/cell with color coded metadata}
 \usage{
-umis_genes_color(dataset, color = "percent.mito")
+umis_genes_color(dataset, color = "percent.mito", dot.size = 0.5)
 }
 \arguments{
 \item{dataset}{Seurat Object}
 
 \item{color}{Name of the metadata column to use for colors in the plot. If FALSE no colorcoding will be performed.}
+
+\item{dot.size}{The size of the single cells, represented by dots, in the plot}
 }
 \description{
 Creates a Scatterplot, where the x axis represents the number of genes per cell and the y axis the number of UMIs per cell. The color can be set accordingly.

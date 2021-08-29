@@ -12,14 +12,14 @@ draw_plot(
   legend = "right",
   do.facet = F,
   facet = NULL,
-  x.fontsize = 15,
-  y.fontsize = 15,
-  legend.fontsize = 17,
-  facets.fontsize = 18,
+  x.fontsize = 7,
+  y.fontsize = 7,
+  legend.fontsize = 7,
+  facets.fontsize = 7,
   facets.rotation = 45,
   x.rotation = 90,
-  title.fontsize = 16,
-  legend.key.size = 1.5,
+  title.fontsize = 8,
+  legend.key.size = 2,
   cluster_colors = NULL
 )
 }

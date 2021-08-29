@@ -7,8 +7,11 @@
 #' @param legend Legend position see ggplot
 #' @param titles if used in loop, what titles should the single plots have? If you just look at clusters,this would be levels(x$cluster).
 #' @param do.col Should a color code be included?
+#' @param lab.size,title.size,axis.font.size Change the fontsizes of the single graph elements
+#' @param selected_genes Genelabel you want to appear in the plot
 #' @export
-Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F){
+Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F,
+                       lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL){
   # define custom color for conditions
  geno_col<-NULL
    if(do.col==T)
@@ -22,18 +25,20 @@ Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titl
                                             lab=rownames(x),
                                             x="avg_log2FC",
                                             y="p_val_adj",
-                                            labSize=7,
+                                            labSize=lab.size,
                                             title=titles,
-                                            titleLabSize=12,
+                                            titleLabSize=title.size,
                                             subtitle=NULL,
                                             caption=NULL,
                                             legendLabSize = 7,
                                             legendIconSize = NULL,
                                             legendLabels = element_blank(),
                                             legendPosition = legend,
-                                            axisLabSize = 7,
+                                            axisLabSize = axis.font.size,
                                             pCutoff = p_cutoff,
-                                            FCcutoff = FC_cutoff),
+                                            FCcutoff = FC_cutoff,
+                                            selectLab=selected_genes,
+                                            pointSize=0.4),
                                        list(colCustom = geno_col)[do.col]
   ))
 

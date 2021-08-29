@@ -34,19 +34,21 @@ align_stats <- function(path,subset=F,exclude=F,legend.pos="right",ymax=20000000
     QC<-QC[grep(subset,QC$ID,fixed=T,invert=exclude),]
   }
   ggplot2::ggplot(reshape2::melt(QC), ggplot2::aes(x = ID, y = value, fill = variable)) +
-    ggplot2::geom_bar(stat = "identity", position = "dodge", colour = "black") +
+    ggplot2::geom_bar(width=.7,stat = "identity", position = "dodge", colour = "black") +
     ggplot2::ylab("Reads") +
-    ggplot2::xlab("") +
+    ggplot2::xlab(NULL) +
     ggplot2::scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE),
                        breaks = c(c(10, 50, 100, 150) * 10^6, -c(10, 50, 100) * 10^6)) +
     ggplot2::ggtitle(title) +
     ggplot2::theme_bw() +
     ggplot2::theme(strip.background = element_rect(fill = "white"),
           panel.background = element_rect(fill = "white", colour = "black"),
-          legend.position = legend.pos, axis.text.x = element_text(angle = 60, hjust=1,size=15),
-          axis.text.y = element_text( vjust = 0.5, hjust=1,size=15),
-          legend.key.size = unit(1.5,"line")
+          legend.position = legend.pos, axis.text.x = element_text(angle = 60, hjust=1,size=5),
+          axis.text.y = element_text( vjust = 0.5, hjust=1,size=5),
+          axis.title = element_text(size=7),
+          legend.title = element_text(size=7),
+          legend.key.size = unit(1,"mm"),
+          legend.text = element_text(size=5)
     )+ggplot2::ylim(0,ymax)
 }
-
 

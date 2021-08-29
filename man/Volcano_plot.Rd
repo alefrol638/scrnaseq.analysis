@@ -11,7 +11,11 @@ Volcano_plot(
   FC_cutoff = 1,
   legend = "none",
   titles = levels(x$cluster),
-  do.col = F
+  do.col = F,
+  lab.size = 7,
+  title.size = 12,
+  axis.font.size = 7,
+  selected_genes = NULL
 )
 }
 \arguments{
@@ -26,6 +30,10 @@ Volcano_plot(
 \item{titles}{if used in loop, what titles should the single plots have? If you just look at clusters,this would be levels(x$cluster).}
 
 \item{do.col}{Should a color code be included?}
+
+\item{lab.size, title.size, axis.font.size}{Change the fontsizes of the single graph elements}
+
+\item{selected_genes}{Genelabel you want to appear in the plot}
 }
 \description{
 wrapper for enhancedVolcano, made specifically for DE gene tables in Seurat 4.0 (careful Seurat <4.0 has "avg_logFC"

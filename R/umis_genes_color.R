@@ -4,8 +4,9 @@
 #' of mitochondrial genes.
 #' @param dataset Seurat Object
 #' @param color Name of the metadata column to use for colors in the plot. If FALSE no colorcoding will be performed.
+#' @param dot.size The size of the single cells, represented by dots, in the plot
 #' @export
-umis_genes_color<-function(dataset,color="percent.mito"){
+umis_genes_color<-function(dataset,color="percent.mito",dot.size=0.5){
   fvsu_mito<-as.data.frame(dataset$nCount_RNA)
   fvsu_mito$nFeature<-dataset$nFeature_RNA
   if(color!=F){
@@ -18,7 +19,7 @@ umis_genes_color<-function(dataset,color="percent.mito"){
     colnames(fvsu_mito)<-c("nUMIs","nGenes")
     ugm<-ggplot2::ggplot(fvsu_mito, ggplot2::aes_string(x="nGenes",y= "nUMIs"))
   }
-  ugm<-draw_plot(ugm,"#UMIs per Cell","#Genes per Cell",ggplot2::geom_point())
+  ugm<-draw_plot(ugm,"#UMIs per Cell","#Genes per Cell",ggplot2::geom_point(size=dot.size))
 
   # add number of genes and number of UMIs histograms at the fringes
   ggExtra::ggMarginal(ugm, type = "histogram",bins=150)

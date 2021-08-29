@@ -230,8 +230,8 @@ Here we use a wrapper function for all these parts called seurat_flow().
 ### use the following commands: 
 # remotes::install_version("Matrix", version = "1.3.2", repos = "http://cran.us.r-project.org")
 
-###umap-learn need to be installed beforehand, if that doesn't work just remove ,umap="umap-learn"
-Seurat_objects$postQC<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F,umap="umap-learn") 
+###umap-learn need to be installed beforehand, if that doesn't work just remove ,umap="uwot"
+Seurat_objects$postQC<-seurat_flow(Seurat_objects$postQC,dim=1:21,sct=T,norm=F,umap="uwot") 
 
 ```
 
@@ -313,7 +313,7 @@ From this plot we can see, that the maximal estimated contamination fraction is 
 
 ```{r,warnings=F,results="hide"}
 
-Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="umap-learn")
+Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="uwot")
 #compare ambient gene corrected dataset and unGenotcorrected
 ##re-add percent.mito
 
@@ -464,7 +464,7 @@ rm(WT,KO)
  Seurat_objects$processed@meta.data$Genotype<-relevel(as.factor(Seurat_objects$processed@meta.data$Genotype),"WT")
 
 ###umap-learn needs to be installed... if error just remove umap="umap-learn"
-Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="umap-learn",only.var = F)
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="uwot",only.var = F)
 
 ```
 
@@ -527,7 +527,7 @@ Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.5"]]
      ###remove Cd8+ cells
    Seurat_objects$processed<-subset(Seurat_objects$processed,idents=seq(0,9,1)[-8])
 ###need to rerun seurat flow after subsetting
-Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="umap-learn",only.var = F)
+Seurat_objects$processed<-seurat_flow(Seurat_objects$processed,res=0.5,dim = 1:21,umap="uwot",only.var = F)
    ####marker genes
 ```
 
@@ -633,21 +633,31 @@ plot_list_g<-list()
  my_cols2<-my_cols2[-c(17,18,19)]
  graph_list_g<-lapply(plot_list_g,scRNAseq.analysis::draw_plot,ylab="rel. Abundance",xlab="",plot=geom_col(),cluster_colors = my_cols2)
 ###plot with percentages and absolute cell numbers across genotypes and cell clusters 
-cluster_abs<-graph_list_g$Seurat_cluster.col+geom_text(aes(label =paste(Freq,"cells",sep=" ")),  position = position_stack(vjust = 0.5),size=5)+geom_text(data=props_total_t,aes(label =total,y=prop,x=Genotype),   vjust = -.25,size=6)
-
+cluster_abs<-graph_list_g$Seurat_cluster.col+geom_text(aes(label =paste(Freq,"cells",sep=" ")),  position = position_stack(vjust = 0.5),size=1.5)+geom_text(data=props_total_t,aes(label =total,y=prop,x=Genotype),   vjust = -.25,size=3)
+# 
 # saveRDS(cluster_abs,here::here("figures","cluster_abs.RDS"))
-plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype"),DimPlot(Seurat_objects$processed,cols = my_cols2,label=T)+NoLegend(),cluster_abs)
+plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype")+theme(title = element_text(size=9)),DimPlot(Seurat_objects$processed,cols = my_cols2,label=T)+NoLegend(),cluster_abs)
+
 
 
 
 ```
 
-## DE Genes & GSEA
+## DE Genes & GOEA
 
 
 First we need to extract all genes in the dataset and translate them into EntrezID, this genes will than be used as background for significance testing in the GSEA function:
-```{r GSEA}
+```{r GOEA}
 
+##check if non protein coding genes give additional information
+# Seurat_objects$safe<-Seurat_objects$processed
+# Seurat_objects$full<-subset(Seurat_objects$total,cells=colnames(Seurat_objects$processed))
+# Seurat_objects$full@reductions$prot_only<-  Seurat::CreateDimReducObject(Seurat_objects[["processed"]]@reductions[["umap"]]@cell.embeddings)
+# Idents(Seurat_objects$full)<-Idents(Seurat_objects$processed)
+# DimPlot(Seurat_objects$full,reduction = "prot_only")
+# Seurat_objects$processed<-Seurat_objects$full
+
+###no real plus, so kept the protein coding only
 ###need to execute after every restart, otherwise Error: external pointer is not valid
 OrgDb = org.Mm.eg.db
 
@@ -706,10 +716,9 @@ R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,
                     timeout = 180,cpu=F,onTimeout = "silent")
 
 }
-
 ###Here Seurat_objects$processed is my final seurat object 
 ###sometimes GO doesn't work in parallel, just run scRNAseq.analysis::GSEA in one core mode and it should be fine
-ontology$nogeno["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "Genotype",top = 50,GeneSets = "GO",total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)
+ontology$nogeno["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "seurat_clusters",top = 50,GeneSets = "GO",total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)
 ```
 
 
@@ -772,17 +781,17 @@ ontology_plots<-list()
 
 ontology_plots[["total"]]<-foreach(i=names(ontology$total),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
-  ontology_plots[[i]]<-clusterProfiler::dotplot(ontology$total[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+  ontology_plots[[i]]<-clusterProfiler::dotplot(ontology$total[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"))+ggtitle(i)+scale_size(range = c(1,3))+scale_size(range = c(1,3))
   
-  return(ontology_plots)
-}
+    return(ontology_plots)
+  }
 
 ###create dot plots in separate plots for WT and KO 
 plots<-list()
 ontology_plots[["cluster"]]<-NULL
 ontology_plots[["cluster"]]<-foreach(i=names(ontology$cluster),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
- plots[[i]]<-dotplot(ontology$cluster[[i]],x=~cluster,show=5)+facet_wrap(~Condition)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+ plots[[i]]<-dotplot(ontology$cluster[[i]],x=~cluster,show=5)+facet_wrap(~Condition)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"),)+ggtitle(i)
   
   return(plots)
 }
@@ -794,10 +803,12 @@ plots<-list()
 ontology_plots[["nogeno"]]<-NULL
 ontology_plots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
- plots[[i]]<-dotplot(ontology$nogeno[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=13),axis.text.y = element_text(size=12))+ggtitle(i)
+ plots[[i]]<-dotplot(ontology$nogeno[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"),)+ggtitle(i)+scale_size(range = c(1,3))
   
   return(plots)
 }
+
+# saveRDS(ontology_plots,here::here("RImages/SeqWell_myeolid/Exp_191114","ontology_plots.RDS"))
 ```
 
 Using plot_grid, multiple results dotplots can be visualised at once. For each type of marker genes we used, an entry in the ontology_plots list was created. The next level in the list are the single databases, they can be accessed by name or position:
@@ -805,7 +816,7 @@ Using plot_grid, multiple results dotplots can be visualised at once. For each t
 ###plot all in one: probably too much, thus need to subset: here only plot 7 will be plotted
 levels(Idents(Seurat_objects$processed))
 plot_grid(plotlist = ontology_plots$nogeno["GO"])
-plot_grid(plotlist = ontology_plots$total[c("KEGG","DO")])
+plot_grid(plotlist = ontology_plots$total[c("GO","DO","KEGG","Motifs")])
 plot_grid(plotlist = ontology_plots$cluster[c(1:3)])
 
 ```
@@ -850,6 +861,8 @@ plot_grid(plotlist = emaplots$nogeno["GO"])
 
 ```
 
+
+## Volcano Plots
 ```{r}
 ####Volcano Plots ####
 
@@ -863,51 +876,58 @@ for (i in levels(Idents(tmp))){
   
   
   
-  dataset.markers$cluster[[i]] <-FindMarkers(object = tmp2,ident.1 = "KO",ident.2 = "WT")
+  dataset.markers$cluster[[i]] <-FindMarkers(object = tmp2,ident.1 = "KO",ident.2 = "WT",logfc.threshold = 0.1)
   # colnames(dataset.markers$cluster[[i]])[6]<-"Condition"
   dataset.markers$cluster[[i]]$cluster<-as.factor(i)
 
 }
+
+Idents(tmp)<-tmp$Genotype
+ dataset.markers$geno_total<-FindMarkers(tmp,ident.1 = "KO",ident.2 = "WT",logfc.threshold = 0.1)
+ 
+ rm(tmp,tmp2)
+ highlight<-c("Camk1d","Cmss1","Tmem119","Apc","Ctsb","Tmsb4x","S100a9","Fkbp5","Apoe","Anapc15","Ctsb","Junb","Psap","Clec7a","Lgals3bp","Tmem9","Cdk17")
+ 
 # dataset.markers$cluster<-do.call(rbind,dataset.markers$cluster)
 #  dataset.markers$cluster %>% group_by(cluster,Condition) %>% top_n(n = 50, wt = avg_log2FC) -> top
 Volcano_plots<-list()
 
 ###create list of volcano plots 
-dataset.markers$cluster$ss_MG$cluster
-Volcano_plots<-llply(dataset.markers$cluster,Volcano_plot,do.col=F,Condition="cluster",FC_cutoff=0.25,p_cutoff=1e-02,legend="none",.parallel = T,.paropts = list(.packages = "EnhancedVolcano"))
 
-Volcano_plots$cycling<-Volcano_plot(dataset.markers$cluster$cycling,FC_cutoff=0.25,p_cutoff=1e-03,legend="right")
+Volcano_plots$total<-Volcano_plot(dataset.markers$geno_total,FC_cutoff=0.25,p_cutoff=1e-30,legend="none",titles = "Total",lab.size = 2,title.size = 8)+xlab(NULL)+ylab(NULL)
 
-Volcano_plots$CAM<-Volcano_plot(dataset.markers$cluster$CAM,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
-
-Volcano_plots$DAM_MG<-Volcano_plot(dataset.markers$cluster$DAM_MG,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
-
-Volcano_plots$MG<-Volcano_plot(dataset.markers$cluster$MG,FC_cutoff=0.25,p_cutoff=1e-02,legend="none")
-names(Volcano_plots)<-names(dataset.markers$cluster)
-
-Volcano_plots<-Volcano_plots[-c("inflam_DAM","type_1_MF","inflam_NP")]
-
-plot_grid(plotlist = Volcano_plots)
-##visualise all at once 
-  table_cluster<-table(dataset@active.ident,dataset$Genotype)
-  plot_grid(plotlist=Volcano_plots$nosoup[1],labels=names(Volcano_plots$nosoup)[1])
-  plot_grid(DimPlot(dataset,split.by="Genotype"),DimPlot(dataset))
-  
-  dataset<-Seurat_objects$processed
-  
-  cluster_marker_genes<-list()
-
-```
-
-```{r,eval=F}
-
-names(Seurat_objects[c("WT","KO","nosoup","processed")])
-for(i in c("WT","KO","nosoup")){
-  Seurat_objects[[i]]<-DietSeurat(Seurat_objects[[i]],scale.data = F,assays = "SCT")
+for(i in names(dataset.markers$cluster)){
+    Volcano_plots[[i]]<-Volcano_plot(dataset.markers$cluster[[i]],do.col=F,Condition="cluster",FC_cutoff=0.25,p_cutoff=5e-02,legend="none",lab.size=2,title.size=8)+xlab(NULL)+ylab(NULL)
 }
-Seurat_objects$processed<-NULL
+
+
+Volcano_plots<-Volcano_plots[!(names(Volcano_plots)%in%c("inflam_DAM","inflam_NP","MC","IR_MF","int_homeo_MG","homeo_DAM","type_1_MF"))]
+
+
+
+#add global x and y axes
+
+y.grob <- textGrob("-Log10(p)", 
+                   gp=gpar(fontface="bold", col="black", fontsize=10), rot=90)
+
+x.grob <- textGrob("Log2(FC)", 
+                   gp=gpar(fontface="bold", col="black", fontsize=10))
+
+allVolcano<-plot_grid(plotlist = Volcano_plots)+geom_segment(aes(x = 0.01, y = -0.01, xend = 0.01, yend = 0.95),
+                  arrow = arrow(length = unit(0.2, "cm")))+geom_segment(aes(x = -0.01, y = 0, xend = 0.95, yend = 0),
+                  arrow = arrow(length = unit(0.2, "cm")))+theme(plot.margin=unit(c(7,7,7,7),"mm"))
+
+
+
+
+grid.arrange(arrangeGrob(allVolcano,
+                 left = y.grob, bottom = x.grob))
+
+
+
+
+  # saveRDS(Volcano_plots,here::here("RImages/SeqWell_myeolid/Exp_191114","Volcano_plots.RDS"))
+
 ```
-
-
 
 
