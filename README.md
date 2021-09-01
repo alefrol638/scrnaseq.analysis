@@ -5,9 +5,13 @@ Plots, GSEA, cluster abundances and other useful plots.
 
 ## Installation
 
-You can install this package using the remotes package and a deploy token registered for this repository:
+You can install this package (including unresolved dependecies) using the remotes package and a deploy token registered for this repository:
 
 ```{r}
+
+BiocManager::install("EnhancedVolcano",Ncpus=100)
+install.packages("org.Mm.eg.db","clustree","doMC",Nvpus=100)
+
 
 ###requires remotes version 2.3.0
 remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git",
