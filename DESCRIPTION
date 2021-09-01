@@ -31,7 +31,9 @@ Imports:
         clusterProfiler,
         DOSE,
         doMC,
-        clustree
+        clustree,
+        org.Mm.eg.db,
+        org.Hs.eg.db
 Depends: 
     R (>= 2.10)
 Suggests: 
