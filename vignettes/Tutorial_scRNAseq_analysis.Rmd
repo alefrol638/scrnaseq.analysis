@@ -12,7 +12,9 @@ editor_options:
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.height = 10,
+  fig.width = 12
 )
 ```
 
@@ -20,7 +22,7 @@ knitr::opts_chunk$set(
 
 First we need to import Packages required for the Analysis and register multiple Cores for parallel computation.
 
-```{r setup,results="hide"}
+```{r setup,results='hide',message=F,warning=F}
 library(scRNAseq.analysis)
 library(Seurat)
  library("tidyr")
@@ -34,13 +36,17 @@ library(foreach)
 library(clusterProfiler)
 library(biomaRt)
 library(DOSE)
-doMC::registerDoMC(future::availableCores()*0.5) ###only half, as not to use up all resources, change accordingly, if more power required
+library(grid)
+library(gridExtra)
+doMC::registerDoMC(future::availableCores()*0.5)
+
+###only half, as not to use up all resources, change accordingly, if more power required
 # system.time(fastSave::load.lbzip2(here::here("RImages/SeqWell_myeolid/Exp_191114","full_analysed.RDataFS"),n.cores=100))
 
 ###custom color palette for Seurat, number stands for cluster ID without annotation
-my_cols <- c('0'='#006A40FF','1'="goldenrod1",'2'='#75B41EFF','3'='#95828DFF','4'='#708C98FF',
-             '5'='#8AB8CFFF','6'='#007E7FFF','7'='#358359FF','8'='#8BA1BCFF','9'='#5A5895FF',
-             '10'='#F2990CFF','11'='#5A5895FF','12'='#E5BA3AFF',"13"="chartreuse","14"='#F08892FF',"15"="tomato3","16"="seagreen1","17"="wheat4","18"="orange")
+my_cols <- c('0'='#006A40FF','1'="#F8E5AE",'2'='#75B41EFF','3'='#95828DFF','4'='#708C98FF',
+  '5'='#8AB8CFFF','6'='#007E7FFF','7'='#358359FF','8'='#8BA1BCFF','9'='#5A5895FF',
+  '10'='#F2990CFF','11'='#5A5895FF','12'='#E5BA3AFF',"13"="chartreuse","14"='#F08892FF',"15"="#E10520","16"="#13EF48","17"="#E08A9D","18"="#E59E3C")
 
 my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
 ### show the ID of the color 
@@ -221,7 +227,7 @@ The scRNAseq analysis is split into 3 Parts:
 
 Here we use a wrapper function for all these parts called seurat_flow().
 
-```{r seurat_flow,warnings=F,results="hide"}
+```{r seurat_flow,warning=F,results="hide",error=F,message=F}
 
 
 ###with Seurat >4.0 you need to make sure that Matrix <1.3.2 is installed otherwise following error,when executing FindNeighbors(): 
@@ -305,13 +311,13 @@ par(mfrow = c(1,2), xpd=TRUE)
 Seurat_objects$nosoup<-remove_ambient(Seurat_objects$postQC,Seurat_objects$filtered)
 mito.genes<-mito.genes[mito.genes%in%rownames(Seurat_objects$nosoup)]
 Seurat_objects$nosoup<-MetaFeature(Seurat_objects$nosoup,mito.genes,"percent.mito")
-plot_grid(umis_genes_color(Seurat_objects$processed),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
+plot_grid(umis_genes_color(Seurat_objects$postQC),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
 
 ```
 
 From this plot we can see, that the maximal estimated contamination fraction is 3%, which lays in the range of expected contamination in SeqWell experiments. \
 
-```{r,warnings=F,results="hide"}
+```{r,warning=F,results="hide",warning=F,error=F,message=F}
 
 Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="uwot")
 #compare ambient gene corrected dataset and unGenotcorrected
@@ -348,7 +354,7 @@ The marker genes are similar, although after correction  Nfkbia and Mrc1 appear,
 ## Doublet removal
 
 It is recommended to perform doublet detection separately on each of the present conditions. In our case, we perform the detection on the Genotypes WT and KO. Prior to run the wrapper function for DoubletFinder, the QC for the separate Genotypes might be adjusted slightly and uninformative clusters removed. I will not go here into detail, because the major steps were already explained above:
-```{r,results="hide"}
+```{r,warning=F,results="hide",error=F,message=F}
 Seurat_objects[c("WT","KO")]<-NULL
 Genotypes<-SplitObject(Seurat_objects$nosoup,split.by = "Genotype")
 Seurat_objects<-c(Seurat_objects,Genotypes)
@@ -411,7 +417,7 @@ DimPlot(Seurat_objects$WT)+NoAxes()))
 
 So now that we now that our clusters make sense, we can use DoubletFinder.
 
-```{r,results="hide"}
+```{r,warning=F,results="hide",error=F,message=F}
 Seurat_objects$WT<-doublets(Seurat_objects$WT,dim = 1:21)
 
 Seurat_objects$KO<-doublets(Seurat_objects$KO,dim = 1:21)
@@ -459,7 +465,7 @@ rm(WT,KO)
 
 # Downstream analysis
 
-```{r}
+```{r,warning=F,results="hide",error=F,message=F}
 ###WT should always appear at the left side
  Seurat_objects$processed@meta.data$Genotype<-relevel(as.factor(Seurat_objects$processed@meta.data$Genotype),"WT")
 
@@ -511,7 +517,7 @@ One could sometimes also find plots in optimal_clusters@plots, here it did not w
 ## Subclustering 
 
 Lets first remove T cells from analysis:
-```{r Tcells}
+```{r Tcells,warning=F,results="hide",error=F,message=F}
 ###set best resolution
 cluster_ids<-list()
 Idents(Seurat_objects$processed)<-Seurat_objects$processed[["SCT_snn_res.0.5"]]
@@ -697,7 +703,7 @@ rm(background_hsa)
 In single cell experiments, there are multiple possibilites, which genes to take for GSEA. First, the marker genes of the single cell clusters can be used to confirm our annotation. Seurat::FindMarkers() will be used on the condition variable, which is in our case the cell clusters, total is set to TRUE, so that the Idents are only considered once.\
 There are 5 available databases "GO","KEGG","DO","Hallmark","cannonicalPathways","Motifs","ImmunoSignatures". Lets take all of them and perform GSEA in parallel using foreach :
 
-```{r}
+```{r GOEA_nogeno}
 ###perform scRNAseq.analysis::GSEA for all available databases, the results will be saved in list called ontology
 
 
@@ -723,7 +729,7 @@ ontology$nogeno["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed
 
 
 Furthermore, DE genes between Genotypes can be used for GSEA. Here our condition is the Genotype meta data variable, and total=T needs to be set, so that the single cell clusters are not considered in the analysis:
-```{r}
+```{r GOEA_total}
 
 
 
@@ -742,7 +748,7 @@ ontology[["total"]]<-foreach(i=ontology_db,.errorhandling="remove",.combine=c,.m
 ```
 
 Finally, the DE Genes between Genotypes in each clustered can be used for GSEA, by setting total=F:
-```{r}
+```{r GOEA_Cluster}
 ###Then scRNAseq.analysis::GSEA for each cluster individually
 ontology[["cluster"]]<-NULL
 ontology[["cluster"]]<-foreach(i=ontology_db,.errorhandling = "remove",.combine=c,.multicombine = T) %dopar% {
@@ -759,7 +765,7 @@ ontology$cluster["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processe
 ```
 
 Lets only put WT on the left side of the plot: 
-```{r}
+```{r GOEA_relevel}
 
 ###relevel the genotype, so that WT appears on left side 
 for(i in ontology_db){
@@ -774,14 +780,14 @@ ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]]<-relevel(ontology
 
 ```
 We created now only GSEA objects. To visualise the results dotplot can be used, here we can create a list of ggplots, so that we don't need to run ggplot for each database:
-```{r}
+```{r GOEA_dotplots_all}
 ### Create dotplots 
 ###create dotplots for all the ontologies created above 
 ontology_plots<-list()
 
 ontology_plots[["total"]]<-foreach(i=names(ontology$total),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
-  ontology_plots[[i]]<-clusterProfiler::dotplot(ontology$total[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"))+ggtitle(i)+scale_size(range = c(1,3))+scale_size(range = c(1,3))
+  ontology_plots[[i]]<-clusterProfiler::dotplot(ontology$total[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=3),axis.text.y = element_text(size=3),title=element_text(size=5),legend.key.size = unit(0.2,"line"),legend.text = element_text(size=3))+ggtitle(i)+scale_size(range = c(0.1,1))
   
     return(ontology_plots)
   }
@@ -791,7 +797,7 @@ plots<-list()
 ontology_plots[["cluster"]]<-NULL
 ontology_plots[["cluster"]]<-foreach(i=names(ontology$cluster),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
- plots[[i]]<-dotplot(ontology$cluster[[i]],x=~cluster,show=5)+facet_wrap(~Condition)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"),)+ggtitle(i)
+ plots[[i]]<-dotplot(ontology$cluster[[i]],x=~cluster,show=5)+facet_wrap(~Condition)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=3),strip.text = element_text(size=4,margin = margin(0.5,0,0.5,0, "mm")),axis.text.y = element_text(size=3),title=element_text(size=5),legend.key.size = unit(0.2,"line"),legend.text = element_text(size=3))+ggtitle(i)+scale_size(range = c(0.1,1))
   
   return(plots)
 }
@@ -803,7 +809,7 @@ plots<-list()
 ontology_plots[["nogeno"]]<-NULL
 ontology_plots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clusterProfiler"),.combine=c,.multicombine=T)%dopar%{
   
- plots[[i]]<-dotplot(ontology$nogeno[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=6),axis.text.y = element_text(size=6),title=element_text(size=8),legend.key.size = unit(0.5,"line"),)+ggtitle(i)+scale_size(range = c(1,3))
+ plots[[i]]<-dotplot(ontology$nogeno[[i]],x=~cluster,show=5)+theme(axis.text.x = element_text(angle=60,vjust = 1, hjust=1,size=3),axis.text.y = element_text(size=3),title=element_text(size=5),legend.key.size = unit(0.2,"line"),legend.text = element_text(size=3))+ggtitle(i)+scale_size(range = c(0.1,1))
   
   return(plots)
 }
@@ -812,7 +818,7 @@ ontology_plots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clus
 ```
 
 Using plot_grid, multiple results dotplots can be visualised at once. For each type of marker genes we used, an entry in the ontology_plots list was created. The next level in the list are the single databases, they can be accessed by name or position:
-```{r}
+```{r GOEA_dotplots}
 ###plot all in one: probably too much, thus need to subset: here only plot 7 will be plotted
 levels(Idents(Seurat_objects$processed))
 plot_grid(plotlist = ontology_plots$nogeno["GO"])
@@ -822,7 +828,7 @@ plot_grid(plotlist = ontology_plots$cluster[c(1:3)])
 ```
 
 In the same way, a network visualisation can be used:
-```{r}
+```{r GOEA_emaplots}
 ###for visualisation as a network package enrichplot required
 library(enrichplot)
 
@@ -863,7 +869,7 @@ plot_grid(plotlist = emaplots$nogeno["GO"])
 
 
 ## Volcano Plots
-```{r}
+```{r Volcanos}
 ####Volcano Plots ####
 
 tmp<-Seurat_objects$processed
@@ -894,10 +900,11 @@ Volcano_plots<-list()
 
 ###create list of volcano plots 
 
-Volcano_plots$total<-Volcano_plot(dataset.markers$geno_total,FC_cutoff=0.25,p_cutoff=1e-30,legend="none",titles = "Total",lab.size = 2,title.size = 8)+xlab(NULL)+ylab(NULL)
+Volcano_plots$total<-Volcano_plot(dataset.markers$geno_total,FC_cutoff=0.25,p_cutoff=1e-30,legend="none",titles = "Total",lab.size = 2,title.size = 6)+xlab(NULL)+ylab(NULL)+theme(axis.ticks = element_line(size=.3),axis.line =  element_line(size=.3))
 
 for(i in names(dataset.markers$cluster)){
-    Volcano_plots[[i]]<-Volcano_plot(dataset.markers$cluster[[i]],do.col=F,Condition="cluster",FC_cutoff=0.25,p_cutoff=5e-02,legend="none",lab.size=2,title.size=8)+xlab(NULL)+ylab(NULL)
+    Volcano_plots[[i]]<-Volcano_plot(dataset.markers$cluster[[i]],do.col=F,Condition="cluster",FC_cutoff=0.25,p_cutoff=5e-02,legend="none",lab.size=2,title.size=6)+xlab(NULL)+ylab(NULL)+theme(axis.ticks = element_line(size=.3),axis.line =  element_line(size=.3))
+
 }
 
 
@@ -924,6 +931,8 @@ grid.arrange(arrangeGrob(allVolcano,
                  left = y.grob, bottom = x.grob))
 
 
+
+processed<-Seurat_objects$processed
 
 
   # saveRDS(Volcano_plots,here::here("RImages/SeqWell_myeolid/Exp_191114","Volcano_plots.RDS"))

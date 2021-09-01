@@ -20,8 +20,9 @@
 #' @param present_genes=background,# character vector, Background genes used for statistical testing: (universe in enricher() function), gene names need first to be translated into ensemblID using biomaRt
 #' @param OrgDb mus musculus database need to be loaded prior to use
 #' @param human_ensembl,mouse_ensembl use useMart("ensembl",dataset="...") to load the human and mouse databases
+#' @param up should the upregulated or downregulated genes be used?
 #' @export
-  GSEA <- function(object,
+GSEA <- function(object,
                    condition ="Genotype",#name of column in metadata to use
                    top=50, #top genes from FindAllMarkers
                    GeneSets ="GO",# which database to search (possible: GO,DO,KEGG,(from MSigDb:) Hallmark,cannonicalPathways,ImmunoSignatures,(Transcription Factor)Motifs)
@@ -36,7 +37,8 @@
                    present_genes=background,# Background: all genes in dataset (universe in enricher())
                    OrgDb, # mus musculus database need to be loaded prior to use
                    human_ensembl, # # use useMart to load the human database
-                   mouse_ensembl # use useMart to load the mouse database
+                   mouse_ensembl,# use useMart to load the mouse database
+                   up=T
   ){
 
     tmp<-object
@@ -52,13 +54,17 @@
 
 
 
-        markers[[i]] <-Seurat::FindAllMarkers(object = tmp2,only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
+        markers[[i]] <-Seurat::FindAllMarkers(object = tmp2,only.pos = up,min.pct = min.pct,logfc.threshold = logfc.threshold)
         colnames(markers[[i]])[6]<-"Condition"
         markers[[i]]$cluster<-as.factor(i)
 
       }
       markers<-do.call(rbind,markers)
-      markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::top_n(n = 50, wt = avg_log2FC) -> top
+      if(up==T){
+      markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_max(n = 50, order_by =  avg_log2FC) -> top
+      }else{
+        markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
 
@@ -72,9 +78,14 @@
 
       Seurat::Idents(object = tmp) <- tmp[[]][,condition]
 
-      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = TRUE,min.pct = min.pct,logfc.threshold = logfc.threshold)
+      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
+      markers <- Seurat::FindMarkers(object = tmp, ident.1="WT",only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
+      if(up==T){
+        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_max(n = 50, order_by = avg_log2FC) -> top
+      }else{
+        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+      }
 
-      markers %>% dplyr::group_by(cluster) %>% dplyr::top_n(n = top, wt = avg_log2FC) -> top
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
 
       top<-dplyr::left_join(top,entrez,by=c("gene"="SYMBOL"))

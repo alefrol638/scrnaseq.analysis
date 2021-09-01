@@ -20,7 +20,8 @@ GSEA(
   present_genes = background,
   OrgDb,
   human_ensembl,
-  mouse_ensembl
+  mouse_ensembl,
+  up = T
 )
 }
 \arguments{
@@ -47,6 +48,8 @@ GSEA(
 \item{OrgDb}{mus musculus database need to be loaded prior to use}
 
 \item{human_ensembl, mouse_ensembl}{use useMart("ensembl",dataset="...") to load the human and mouse databases}
+
+\item{up}{should the upregulated or downregulated genes be used?}
 
 \item{present_genes=background, #}{character vector, Background genes used for statistical testing: (universe in enricher() function), gene names need first to be translated into ensemblID using biomaRt}
 }
