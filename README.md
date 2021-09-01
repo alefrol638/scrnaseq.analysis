@@ -14,7 +14,7 @@ BiocManager::install("EnhancedVolcano",Ncpus=100)
 
 ###requires remotes version 2.3.0
 remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git",
-                     credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm"))
+                     credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm",build_vignettes = T))
 
 ```
 
