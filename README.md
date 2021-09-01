@@ -10,7 +10,6 @@ You can install this package (including unresolved dependecies) using the remote
 ```{r}
 
 BiocManager::install("EnhancedVolcano",Ncpus=100)
-install.packages("org.Mm.eg.db","clustree","doMC",Nvpus=100)
 
 
 ###requires remotes version 2.3.0
