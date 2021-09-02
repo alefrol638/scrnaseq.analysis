@@ -1,3 +1,26 @@
+# Singularity 
+
+All the required packages are installed in singularity container: alefrol/default/bioconductor_3.13:fullR.
+To start a R studio server session execute this on your remote server (f.e 10.0.161.2): 
+
+
+```{bash}
+###create config folders and files, to be able to run locally (first fill in individual information)
+
+mkdir -p run var-lib-rstudio-server
+
+printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
+
+## run container 
+start container
+PASSWORD=test123 singularity exec 
+--nv --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf 
+--bind server_location:container_location library://alefrol/default/bioconductor_3.13fullR rserver --www-address=10.0.161.2 --auth-none=0 
+--auth-pam-helper-path=pam-helper --secure-cookie-key-file ~/tmp/r-server --server-data-dir ~/var/run/rstudio-server
+--www-port=<portofchoice>&
+
+```
+
 # scRNAseq Analysis
 
 Wrapper for multiple R packages for performing scRNAseq analysis on the data format of the PRECISE output. Includes generation of Volcano
