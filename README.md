@@ -12,7 +12,7 @@ mkdir -p run var-lib-rstudio-server
 printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 
 ## run container 
-start container
+
 PASSWORD=test123 singularity exec 
 --nv --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf 
 --bind server_location:container_location library://alefrol/default/bioconductor_3.13fullR rserver --www-address=10.0.161.2 --auth-none=0 
@@ -52,17 +52,4 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 
 ## Usage
 
-you can browse the vignettes using:
-
-```{r}
-### check all installed vignettes
-browseVignettes("scRNAseq.analysis")
-###have a look at the tutorial html file 
-vignette("Tutorial_scRNAseq_analysis")
-
-###or get the source code for the tutorial vignette
-
-edit(vignette("Tutorial_scRNAseq_analysis"))
-
-
-```
+Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html
