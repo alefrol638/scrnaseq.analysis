@@ -52,4 +52,5 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 
 ## Usage
 
-Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html
+Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html and open it 
+with your internet browser of choice.
