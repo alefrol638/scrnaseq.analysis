@@ -29,7 +29,8 @@ PASSWORD=test123 singularity exec
 
 ## Installation
 
-You can install this package (including unresolved dependecies) using the remotes package and a deploy token registered for this repository:
+You can install this package outside of the docker container (including unresolved dependecies) using the remotes package and a deploy token registered for this repository. However, 
+you might need to install more packages which are not listed here:
 
 ```{r}
 
