@@ -26,6 +26,8 @@ PASSWORD=test123 singularity exec
 
 ```
 
+This image also contains a full latex installation and miniconda, if you would like to document your work or use python packages via 
+reticulate.
 
 ## Installation
 
