@@ -29,6 +29,20 @@ PASSWORD=test123 singularity exec
 This image also contains a full latex installation and miniconda, if you would like to document your work or use python packages via 
 reticulate.
 
+Unfortunately, not enough space was provided on the server to also install the required conda environments. These need to be installed
+manually via reticulate:
+reticulate::conda_create("scvelo",python_version="3.7")
+reticulate::conda_install("scvelo","scvelo",python_version="3.7")
+reticulate::conda_create("totalVI",python_version="3.7",pip=T)
+reticulate::conda_install("totalVI","scvi-tools",python_version="3.7",pip=T)
+reticulate::conda_create("scirpy",python_version="3.7",pip=T)
+reticulate::conda_install("scirpy","scirpy",python_version="3.7",pip=T)
+
+If you want to generate UMAPs in these environments using scanpy, it might give you an error, reinstalling scanpy might resolve the issue (f.e scvelo environment):
+reticulate::conda_install("scvelo","scanpy",python_version="3.7")
+start using the environment, f.e scvelo:
+reticulate::use_condaenv("scvelo")
+
 ## Installation
 
 You can install this package outside of the docker container (including unresolved dependecies) using the remotes package and a deploy token registered for this repository. However, 
