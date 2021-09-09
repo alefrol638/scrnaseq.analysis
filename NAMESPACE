@@ -3,6 +3,7 @@
 export(GSEA)
 export(UMIs_cell)
 export(Volcano_plot)
+export(abs_by_cond)
 export(align_stats)
 export(cal_percent_zero)
 export(capwords)

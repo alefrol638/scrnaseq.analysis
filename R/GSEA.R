@@ -63,7 +63,7 @@ GSEA <- function(object,
       if(up==T){
       markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_max(n = 50, order_by =  avg_log2FC) -> top
       }else{
-        markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers[markers$avg_log2FC<0,] %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
         }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
@@ -78,12 +78,11 @@ GSEA <- function(object,
 
       Seurat::Idents(object = tmp) <- tmp[[]][,condition]
 
-      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
-      markers <- Seurat::FindMarkers(object = tmp, ident.1="WT",only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
+      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = up,min.pct = min.pct,logfc.threshold = logfc.threshold)
       if(up==T){
         markers %>% dplyr::group_by(cluster) %>% dplyr::slice_max(n = 50, order_by = avg_log2FC) -> top
       }else{
-        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers[markers$avg_log2FC<0,] %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
       }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
@@ -132,8 +131,7 @@ GSEA <- function(object,
     genes_read<-ifelse(GeneSets=="GO"|GeneSets=="DO",T,F)
     if(GeneSets=="GO"|GeneSets=="KEGG"){
       universe<-present_genes$ENTREZID
-    }
-    else{
+    }else{
       universe<-present_genes$entrez_h
     }
 
