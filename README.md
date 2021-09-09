@@ -3,15 +3,67 @@
 Wrapper for multiple R packages for performing scRNAseq analysis on the data format of the PRECISE output. Includes generation of Volcano
 Plots, GSEA, cluster abundances and other useful plots.
 
+## Singularity 
+
+All the required packages are installed in docker image: alefrol94/scrnaseq.analysis.
+To start a R studio server session execute this on your remote server (f.e 10.0.161.2): 
+
+
+```{bash}
+###create config folders and files, to be able to run locally (first fill in individual information)
+
+mkdir -p run var-lib-rstudio-server
+
+printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
+
+## run container 
+
+PASSWORD=test123 singularity exec 
+--nv --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf 
+--bind server_location:container_location docker:alefrol94/scrnaseq.analysis rserver --www-address=10.0.161.2 --auth-none=0 
+--auth-pam-helper-path=pam-helper --secure-cookie-key-file ~/tmp/r-server --server-data-dir ~/var/run/rstudio-server
+--www-port=<portofchoice>&
+
+```
+
+This image also contains a full latex installation and miniconda, if you would like to document your work or use python packages via 
+reticulate.
+
+Unfortunately, not enough space was provided on the server to also install the required conda environments. These need to be installed
+manually via reticulate:
+
+```{r}
+reticulate::conda_create("scvelo",python_version="3.7")
+reticulate::conda_install("scvelo","scvelo",python_version="3.7")
+reticulate::conda_create("totalVI",python_version="3.7",pip=T)
+reticulate::conda_install("totalVI","scvi-tools",python_version="3.7",pip=T)
+reticulate::conda_create("scirpy",python_version="3.7",pip=T)
+reticulate::conda_install("scirpy","scirpy",python_version="3.7",pip=T)
+```
+
+If you want to generate UMAPs in these environments using scanpy, it might give you an error, reinstalling scanpy might resolve the issue (f.e scvelo environment):
+```{r}
+reticulate::conda_install("scvelo","scanpy",python_version="3.7")
+```
+start using the environment, f.e scvelo:
+
+```{r}
+reticulate::use_condaenv("scvelo")
+```
+
 ## Installation
 
-You can install this package using the remotes package and a deploy token registered for this repository:
+You can install this package outside of the docker container (including unresolved dependecies) using the remotes package and a deploy token registered for this repository. However, 
+you might need to install more packages which are not listed here:
 
 ```{r}
 
+BiocManager::install("EnhancedVolcano",Ncpus=100)
+
+
 ###requires remotes version 2.3.0
 remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git",
-                     credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm"))
+                     credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm",build_vignettes = T))
 
 ```
 
@@ -26,17 +78,5 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 
 ## Usage
 
-you can browse the vignettes using:
-
-```{r}
-### check all installed vignettes
-browseVignettes("scRNAseq.analysis")
-###have a look at the tutorial html file 
-vignette("Tutorial_scRNAseq_analysis")
-
-###or get the source code for the tutorial vignette
-
-edit(vignette("Tutorial_scRNAseq_analysis"))
-
-
-```
+Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html and open it 
+with your internet browser of choice.
