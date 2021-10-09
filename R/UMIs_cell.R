@@ -1,7 +1,7 @@
 #' @title Plot #UMIs/cell vs. ranked cells
 #' @description Show the number of UMIs per cells vs. the cells ranked by their UMI content. Linear correlation expected.
 #' This plot helps to determine the #UMI cutoff, to exclude empty wells. The cutoff is set on the position, where the drop in UMIs is not directly proportional to the size of the cell.
-#' taken from scripts of Jonas Schrepping/DZNE
+#' taken from scripts of Jonas Schulte-Schrepping/DZNE
 #' @param seurat_total Seurat Object
 #' @param cutoff At which #UMI to draw the cutoff line... this does not subset the Seurat Object, you still need to do it manually
 #' @export UMIs_cell
