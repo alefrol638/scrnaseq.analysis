@@ -14,6 +14,8 @@
 Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F,
                        lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1){
   # define custom color for conditions
+
+
  geno_col<-NULL
    if(do.col==T)
   {

@@ -12,18 +12,20 @@
 #' @param only.var Boolean, should only variable genes returned in scale.data of SCT Assay?
 #' @param UMIs set to FALSE, if you have full transcripts instead of 3' 5' captured (f.e SmartSeq data)
 #' @param scale should the expression be scaled to unit variance?
+#' @param norm.method Which method to use for normalisation, See Seurat::NormalizeData()
 #' @export
-seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=1,low.features=F,umap="uwot",red.space="pca",only.var=T,UMIs=T,scale=T){
+seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=1,low.features=F,umap="uwot",red.space="pca",only.var=T,UMIs=T,scale=T,
+                      norm.method="LogNormalize"){
 
   if(sct==T){
     x<-Seurat::SCTransform(x,do.correct.umi = UMIs,do.scale = scale,vars.to.regress = regress,return.only.var.genes = only.var)
   }
   if(norm==T){
-    x <- Seurat::NormalizeData(x)
+    x <- Seurat::NormalizeData(x,normalization.method=norm.method)
 
     if(low.features==F)
     {x <- Seurat::FindVariableFeatures(x, selection.method = "vst", nfeatures = 5000)}
-
+    }
     if(scale==T)
     {
       if(only.var==F | low.features==T){
@@ -32,7 +34,7 @@ seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=
       }else{x<-Seurat::ScaleData(x,vars.to.regress = regress)}
     }
 
-  }
+  
   if(do.pca==T){
     if(low.features){
     x<-Seurat::RunPCA(x,features=rownames(x),approx=F)
