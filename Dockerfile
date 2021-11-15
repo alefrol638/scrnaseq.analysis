@@ -110,6 +110,7 @@ find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
 RUN chown 5532:1001 /opt/conda
 RUN R -e 'devtools::install_version("future", version = "1.12.0", repos = "http://cran.us.r-project.org",upgrade = "never", force = TRUE)'
 RUN R -e 'BiocManager::install("BiocStyle",Ncpus=future::availableCores())'
+RUN R -e 'BiocManager::install("limma",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("devtools",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("pkgbuild",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("cowplot",Ncpus=future::availableCores())'
