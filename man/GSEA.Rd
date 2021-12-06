@@ -43,7 +43,7 @@ GSEA(
 
 \item{total}{If TRUE, will perform bulk GSEA, not considering single seurat cluster (useful for total comparison between samples, or just for marker genes of the clusters)}
 
-\item{org}{more information in clusterprofiler vignette}
+\item{org}{Specifying the species: mmu: mouse hsa: human. More information in clusterprofiler vignette}
 
 \item{OrgDb}{mus musculus database need to be loaded prior to use}
 

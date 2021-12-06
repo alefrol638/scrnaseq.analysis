@@ -10,7 +10,10 @@ abs_by_cond(
   use_cols = NULL,
   font.total = 3,
   font.stack = 1.5,
-  ctrl.group = "WT"
+  ctrl.group = "WT",
+  label.stack = T,
+  label.total = T,
+  title = "Cluster Abundances"
 )
 }
 \arguments{
@@ -25,6 +28,8 @@ abs_by_cond(
 \item{font.stack}{Font size of the cluster cell numbers in each stack}
 
 \item{ctrl.group}{Name of the condition which should appear on the far left side of the plot}
+
+\item{label.stack, label.total}{Should the number of cells be displayed in each stack (cluster), or above bar (total), respectively?}
 }
 \description{
 This function creates a barplot, with stacks representing the single cell clusters and the x-axis the condition, which you specify by

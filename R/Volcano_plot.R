@@ -35,7 +35,7 @@ Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titl
                                             caption=NULL,
                                             legendLabSize = 7,
                                             legendIconSize = NULL,
-                                            legendLabels = element_blank(),
+                                            legendLabels = ggplot2::element_blank(),
                                             legendPosition = legend,
                                             axisLabSize = axis.font.size,
                                             pCutoff = p_cutoff,

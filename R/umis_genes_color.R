@@ -24,5 +24,4 @@ umis_genes_color<-function(dataset,color="percent.mito",dot.size=0.5,font.size=1
                  legend.key.size=legend.key)
 
   # add number of genes and number of UMIs histograms at the fringes
-  ggExtra::ggMarginal(ugm, type = "histogram",bins=150)
-  }
+  ggExtra::ggMarginal(ugm, type = "histogram",bins=150)}
