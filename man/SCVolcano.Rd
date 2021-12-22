@@ -12,7 +12,7 @@ SCVolcano(
   logfc = 0.1,
   min.pct = 0.1,
   do.col = F,
-  lab.size = 7,
+  lab.size = 3,
   title.size = 12,
   axis.font.size = 7,
   dot.size = 1,

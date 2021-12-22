@@ -18,7 +18,7 @@
  SCVolcano<-function(x,Condition,cond1,cond2,logfc=0.1,min.pct=0.1,do.col=F,
 lab.size=3,title.size=12,axis.font.size=7,dot.size=1,
 FC_cutoff=0.25,p_cutoff=5e-02,legend="none",xlab=NULL,ylab=NULL,axis.ticks=.3,axis.line =.3,allvs1=T){
-x<-Seurat_objects$Tcells
+
 dataset.markers<-list()
 
 dataset.markers$cluster<-list()

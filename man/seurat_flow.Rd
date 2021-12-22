@@ -19,7 +19,8 @@ seurat_flow(
   only.var = T,
   UMIs = T,
   scale = T,
-  norm.method = "LogNormalize"
+  norm.method = "LogNormalize",
+  graph = "SCT_snn"
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ seurat_flow(
 \item{scale}{should the expression be scaled to unit variance?}
 
 \item{norm.method}{Which method to use for normalisation, See Seurat::NormalizeData()}
+
+\item{graph}{graph name for the FindNeighbors() function}
 }
 \description{
 Wrapper for Seurat tools. Allows to use different normalisation methods by changing one parameter. Furthermore, changes in dimensionality reduction can be adapted.

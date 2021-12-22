@@ -9,7 +9,11 @@ abs_by_cond(
   condition = "Genotype",
   use_cols = NULL,
   font.total = 3,
+  legend.key.size = 1,
+  legend.text.size = 4,
+  legend.position = "right",
   font.stack = 1.5,
+  axis.text.size = 7,
   ctrl.group = "WT",
   label.stack = T,
   label.total = T,
@@ -24,6 +28,8 @@ abs_by_cond(
 \item{use_cols}{named vector with the cluster identities as names and the value a custom color you want to use. If NULL standard color will be used.}
 
 \item{font.total}{Font size of the total cell number (number above bar plot)}
+
+\item{legend.key.size, legend.text.size, legend.position}{Appearance of legend (See ggplot2)}
 
 \item{font.stack}{Font size of the cluster cell numbers in each stack}
 
