@@ -22,7 +22,7 @@ abs_by_cond<-function(seuratobject,condition="Genotype",use_cols=NULL,font.total
   ####required for the total cell number labels in the plot later
   table_geno<-table(seuratobject[[condition]])
   table_geno<- as.data.frame(table_geno)
-  table_geno$Seurat_cluster<-"act. MG"
+  table_geno$Seurat_cluster<-""
   colnames(table_geno)<-c(condition,"Freq","Seurat_cluster")
   if(!is.na(ctrl.group)){
   table_geno[[condition]]<-relevel(table_geno[[condition]],ctrl.group)

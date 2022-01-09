@@ -1,6 +1,6 @@
 Package: scRNAseq.analysis
 Title: scRNAseq analysis using multiple existing tools
-Version: 0.0.0.9000
+Version: 1.5.0
 Authors@R: 
     person(given = "Aleksej",
            family = "Frolov",
@@ -33,7 +33,8 @@ Imports:
         doMC,
         clustree,
         org.Mm.eg.db,
-        org.Hs.eg.db
+        org.Hs.eg.db,
+        rstatix
 Depends: 
     R (>= 2.10)
 Suggests: 
