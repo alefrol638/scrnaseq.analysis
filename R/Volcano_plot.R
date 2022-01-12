@@ -10,19 +10,31 @@
 #' @param lab.size,title.size,axis.font.size Change the fontsizes of the single graph elements
 #' @param selected_genes Genelabel you want to appear in the plot
 #' @param dot.size size of dots representing each gene in plot
+#' @param highlight_genes character vector of genes to be highlighted with with red color
 #' @export
 Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F,
-                       lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1){
+                       lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1,highlight_genes=NULL){
   # define custom color for conditions
 
-
+custom_col<-NULL
  geno_col<-NULL
    if(do.col==T)
   {
     geno_col <- x[,Condition]
     names(geno_col)<-geno_col
     levels(geno_col)<-my_cols[1:length(levels(geno_col))]
-  }
+   }
+
+ if(length(highlight_genes)>0)
+ {
+   custom_col<-x$gene
+   custom_col[!custom_col%in%highlight_genes]<-"black"
+   custom_col[custom_col%in%highlight_genes]<-"red"
+   names(custom_col)[!custom_col=="black"]<-"normal"
+   names(custom_col)[custom_col=="red"]<-"GOI"
+   highlight_genes<-T
+ }
+
 
   plot<-do.call(EnhancedVolcano::EnhancedVolcano,args=c(list(toptable=x,
                                             lab=rownames(x),
@@ -42,7 +54,8 @@ Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titl
                                             FCcutoff = FC_cutoff,
                                             selectLab=selected_genes,
                                             pointSize=dot.size),
-                                       list(colCustom = geno_col)[do.col]
+                                       list(colCustom = geno_col)[do.col],
+                                       list(colCustom = custom_col)[highlight_genes]
   ))
 
 }
