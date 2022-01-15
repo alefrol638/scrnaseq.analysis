@@ -34,7 +34,8 @@ Imports:
         clustree,
         org.Mm.eg.db,
         org.Hs.eg.db,
-        rstatix
+        rstatix,
+        ggprism
 Depends: 
     R (>= 2.10)
 Suggests: 
