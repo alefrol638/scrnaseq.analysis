@@ -1,5 +1,5 @@
 #' @title Gene Biotype distribution plot
-#' @description taken from scripts of Jonas Schrepping/DZNE
+#' @description taken from scripts of Jonas Schulte-Schrepping/DZNE
 #' Shows a plot of the distribution of biotypes among the genes in a Seurat object
 #' @param seurat_total Seurat object
 #' @param mart.use create Mart Object using UseMart()

@@ -6,7 +6,7 @@
 #' the purpose of this function is to use it in foreach loop, in order to look for enrichment in all available databases in parallel (for usage see script in https://gitlab.dzne.de/frolova/spg15.git/scripts/Seurat_Flow_AF.Rmd).
 #' For MSigDb GSEA To use the most up to date databases you might need to download the latest databases from MsigDb (https://www.gsea-msigdb.org/gsea/msigdb/).
 #' The Databases used here were downloaded in July 2021.
-#' Function adapted from scripts of Jonas Schrepping/DZNE.
+#' Function adapted from scripts of Jonas Schulte-Schrepping/DZNE.
 #' @param object Seurat Object
 #' @param condition name of column in metadata to use
 #' @param top Number of genes from FindAllMarkers to use for GSEA

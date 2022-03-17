@@ -111,18 +111,21 @@ RUN chown 5532:1001 /opt/conda
 RUN R -e 'devtools::install_version("future", version = "1.12.0", repos = "http://cran.us.r-project.org",upgrade = "never", force = TRUE)'
 RUN R -e 'BiocManager::install("BiocStyle",Ncpus=future::availableCores())'
 RUN R -e 'BiocManager::install("limma",Ncpus=future::availableCores())'
+
 RUN R -e 'install.packages("devtools",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("pkgbuild",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("cowplot",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("readxl",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("doMC",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("git2r",Ncpus=future::availableCores())'
+
 RUN R -e 'install.packages("renv",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("qpcR",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("jpeg",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("DESeq2",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("here",Ncpus=future::availableCores())'
 RUN R -e 'install.packages("usethis",Ncpus=future::availableCores())'
+
 RUN R -e 'devtools::install_version("tidyverse", version = "1.3.0", repos = "http://cran.us.r-project.org",upgrade = "never", force = TRUE,Ncpus=future::availableCores())'
 RUN R -e 'devtools::install_version("future.apply", version = "1.2.0", repos = "http://cran.us.r-project.org",upgrade = "never", force = TRUE,Ncpus=future::availableCores())'
 RUN R -e 'devtools::install_version("reticulate", version = "1.18", repos = "http://cran.us.r-project.org",upgrade = "never", force = TRUE,Ncpus=future::availableCores())'
@@ -166,6 +169,7 @@ RUN R -e 'devtools::install_version("org.Hs.eg.db", version="3.12.0", repos="htt
 RUN R -e 'devtools::install_version("org.Mm.eg.db", version="3.13.0", repos="https://bioconductor.org/packages/3.13/data/annotation",upgrade = "never", force = TRUE,Ncpus=future::availableCores())'
 ADD scrnaseq.analysis /tmp/scrnaseq.analysis
 RUN R -e 'devtools::install("/tmp/scrnaseq.analysis/")'
+
 RUN R -e 'reticulate::conda_create("scvelo")'
 RUN R -e 'reticulate::conda_install("scvelo","scvelo",pip=T,python_version = 3.7)'
 RUN R -e 'reticulate::conda_create("totalVI")'
@@ -173,5 +177,5 @@ RUN R -e 'reticulate::conda_install("totalVI","scvi-tools",channel = c("bioconda
 RUN R -e 'reticulate::conda_create("scirpy")'
 RUN R -e 'reticulate::conda_install("scirpy","scvi-tools",channel = c("bioconda","conda-forge"),python_version = 3.7)'
 
-CMD exec /bin/bash "$@"
+CMD exec /init
 

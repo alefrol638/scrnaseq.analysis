@@ -1,5 +1,5 @@
 #' @title Alignment Statistics
-#' @description  finds QC statistics and summarises the information of multiple samples in one plot,function taken from scripts of Jonas Schrepping/DZNE
+#' @description  finds QC statistics and summarises the information of multiple samples in one plot,function taken from scripts of Jonas Schulte-Schrepping/DZNE
 #' @param path character, Path to DropSeq results folder , ends with .../output/results
 #' @param subset character vector, Cells to subset for
 #' @param exclude Boolean, if TRUE cells specified in subset will be excluded
