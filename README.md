@@ -77,4 +77,6 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 ## Usage
 
 Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html and open it 
-with your internet browser of choice.
+with your internet browser of choice. Some functions have additional parameters not included in the vignette, please refer to the documentation.
+
+Vignettes for the usage of the conda environments are not available yet. Please refer to the official documentation of the respective packages for now. 
