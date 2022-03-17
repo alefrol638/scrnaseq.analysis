@@ -1,7 +1,7 @@
 # scRNAseq Analysis
 
 Wrapper for multiple R packages for performing scRNAseq analysis on the data format of the DropSeq output. Includes generation of Volcano
-Plots, GOEA, cluster abundances and other useful plots.
+Plots, GOEA, cluster abundances and other useful plots. Based on Jonas Schulte-Schrepping (jonas.schulte-schrepping@dzne.de) docker image and associated code chunks.
 
 ## Singularity 
 
