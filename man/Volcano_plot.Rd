@@ -16,7 +16,8 @@ Volcano_plot(
   title.size = 12,
   axis.font.size = 7,
   selected_genes = NULL,
-  dot.size = 1
+  dot.size = 1,
+  highlight_genes = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ Volcano_plot(
 \item{selected_genes}{Genelabel you want to appear in the plot}
 
 \item{dot.size}{size of dots representing each gene in plot}
+
+\item{highlight_genes}{character vector of genes to be highlighted with with red color}
 }
 \description{
 wrapper for enhancedVolcano, made specifically for DE gene tables in Seurat 4.0 (careful Seurat <4.0 has "avg_logFC"

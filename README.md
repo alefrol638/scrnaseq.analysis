@@ -1,13 +1,12 @@
 # scRNAseq Analysis
 
-Wrapper for multiple R packages for performing scRNAseq analysis on the data format of the PRECISE output. Includes generation of Volcano
-Plots, GSEA, cluster abundances and other useful plots.
+Wrapper for multiple R packages for performing scRNAseq analysis on the data format of the DropSeq output. Includes generation of Volcano
+Plots, GOEA, cluster abundances and other useful plots.
 
 ## Singularity 
 
 All the required packages are installed in docker image: alefrol94/scrnaseq.analysis.
-To start a R studio server session execute this on your remote server (f.e 10.0.161.2): 
-
+To start a R studio server session execute this on your remote server:
 
 ```{bash}
 ###create config folders and files, to be able to run locally (first fill in individual information)
@@ -18,11 +17,17 @@ printf 'provider=sqlite\ndirectory=/var/lib/rstudio-server\n' > database.conf
 
 ## run container 
 
-PASSWORD=test123 singularity exec 
+PASSWORD=<yourPassword> singularity exec 
 --nv --bind run:/run,var-lib-rstudio-server:/var/lib/rstudio-server,database.conf:/etc/rstudio/database.conf 
---bind server_location:container_location docker:alefrol94/scrnaseq.analysis rserver --www-address=10.0.161.2 --auth-none=0 
+--bind server_location:container_location docker:alefrol94/scrnaseq.analysis rserver --www-address=<yourServer> --auth-none=0 
 --auth-pam-helper-path=pam-helper --secure-cookie-key-file ~/tmp/r-server --server-data-dir ~/var/run/rstudio-server
 --www-port=<portofchoice>&
+
+```
+Alternatively in Docker: 
+```{bash}
+
+docker run -d -p <localport>:<remote> -e PASSWORD=<yourPassword> -v = /home/user:/home/user alefrol94/scrnaseq.analysis:reticulate rserver --www-port=8787 --secure-cookie-key-file /home/user/tmp/r-server --server-daemonize=0
 
 ```
 

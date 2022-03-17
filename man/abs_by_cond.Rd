@@ -6,25 +6,38 @@
 \usage{
 abs_by_cond(
   seuratobject,
-  condition = "Genotype",
+  condition1,
+  condition2,
   use_cols = NULL,
   font.total = 3,
+  legend.key.size = 1,
+  legend.text.size = 4,
+  legend.position = "right",
   font.stack = 1.5,
-  ctrl.group = "WT"
+  axis.text.size = 7,
+  ctrl.group1 = NA,
+  control.group2 = NA,
+  label.stack = T,
+  label.total = T,
+  title = "Cluster Abundances"
 )
 }
 \arguments{
 \item{seuratobject}{self explanantory}
 
-\item{condition}{meta data variable you want to use, to compare the cluster abundances}
+\item{condition1, condition2}{meta data variable you want to use, to compare the cluster abundances, condition 1 will be split on the x axis, condition2 will be used for facetting}
 
 \item{use_cols}{named vector with the cluster identities as names and the value a custom color you want to use. If NULL standard color will be used.}
 
 \item{font.total}{Font size of the total cell number (number above bar plot)}
 
+\item{legend.key.size, legend.text.size, legend.position}{Appearance of legend (See ggplot2)}
+
 \item{font.stack}{Font size of the cluster cell numbers in each stack}
 
-\item{ctrl.group}{Name of the condition which should appear on the far left side of the plot}
+\item{ctrl.group1, ctrl.group2}{Name of the condition which should appear on the far left side of the plot, refers to condition1 or condition2, respectively}
+
+\item{label.stack, label.total}{Should the number of cells be displayed in each stack (cluster), or above bar (total), respectively?}
 }
 \description{
 This function creates a barplot, with stacks representing the single cell clusters and the x-axis the condition, which you specify by

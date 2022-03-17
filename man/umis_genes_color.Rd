@@ -4,7 +4,14 @@
 \alias{umis_genes_color}
 \title{Scatterplot: #UMIs/cell vs. #genes/cell with color coded metadata}
 \usage{
-umis_genes_color(dataset, color = "percent.mito", dot.size = 0.5)
+umis_genes_color(
+  dataset,
+  color = "percent.mito",
+  dot.size = 0.5,
+  font.size = 17,
+  legend.font = 14,
+  legend.key = 5
+)
 }
 \arguments{
 \item{dataset}{Seurat Object}

@@ -16,7 +16,7 @@
 #' @param pvalueCutoff,qvalueCutoff set the unadj. or adj. p-value (depending on correction method) and q-value cutoff (FDR corrected)
 #' @param min.pct,logfc.threshold parameters for FindAllMarkers (see manual for further information)
 #' @param total If TRUE, will perform bulk GSEA, not considering single seurat cluster (useful for total comparison between samples, or just for marker genes of the clusters)
-#' @param org more information in clusterprofiler vignette
+#' @param org Specifying the species: mmu: mouse hsa: human. More information in clusterprofiler vignette
 #' @param present_genes=background,# character vector, Background genes used for statistical testing: (universe in enricher() function), gene names need first to be translated into ensemblID using biomaRt
 #' @param OrgDb mus musculus database need to be loaded prior to use
 #' @param human_ensembl,mouse_ensembl use useMart("ensembl",dataset="...") to load the human and mouse databases
@@ -63,7 +63,7 @@ GSEA <- function(object,
       if(up==T){
       markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_max(n = 50, order_by =  avg_log2FC) -> top
       }else{
-        markers[markers$avg_log2FC<0,] %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
         }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
@@ -78,11 +78,11 @@ GSEA <- function(object,
 
       Seurat::Idents(object = tmp) <- tmp[[]][,condition]
 
-      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = up,min.pct = min.pct,logfc.threshold = logfc.threshold)
+      markers <- Seurat::FindAllMarkers(object = tmp, only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
       if(up==T){
         markers %>% dplyr::group_by(cluster) %>% dplyr::slice_max(n = 50, order_by = avg_log2FC) -> top
       }else{
-        markers[markers$avg_log2FC<0,] %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
       }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
@@ -99,7 +99,7 @@ GSEA <- function(object,
        "DO" %in% GeneSets |
        "cannonicalPathways" %in% GeneSets|
        "ImmunoSignatures" %in% GeneSets |
-       "Motifs" %in% GeneSets){
+       "Motifs" %in% GeneSets&org=="mmu"){
 
       # Get human homologues for mouse genes
       entrez_hsa<- biomaRt::getLDS(attributes = c("entrezgene_id"),
@@ -131,7 +131,8 @@ GSEA <- function(object,
     genes_read<-ifelse(GeneSets=="GO"|GeneSets=="DO",T,F)
     if(GeneSets=="GO"|GeneSets=="KEGG"){
       universe<-present_genes$ENTREZID
-    }else{
+    }
+    else{
       universe<-present_genes$entrez_h
     }
 

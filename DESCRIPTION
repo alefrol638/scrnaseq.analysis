@@ -1,6 +1,6 @@
 Package: scRNAseq.analysis
 Title: scRNAseq analysis using multiple existing tools
-Version: 0.0.0.9000
+Version: 1.5.0
 Authors@R: 
     person(given = "Aleksej",
            family = "Frolov",
@@ -12,7 +12,7 @@ License: use_mit_license()
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Imports:
         NbClust,
         ggplot2,
@@ -33,7 +33,9 @@ Imports:
         doMC,
         clustree,
         org.Mm.eg.db,
-        org.Hs.eg.db
+        org.Hs.eg.db,
+        rstatix,
+        ggprism
 Depends: 
     R (>= 2.10)
 Suggests: 

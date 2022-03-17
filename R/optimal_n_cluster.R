@@ -10,7 +10,7 @@ nbclust<-setClass("nbclust", slots=list(full_list = "list",
 #'  if nothing is specified, all of them are used
 #' @param min.nc,max.nc integer, minimal and maximal number of clusters to calculate for
 #' @param only.metaif will skip the NbClust step and only create meta data with the nbclust clustering information from an existing nbclust class
-#' @param name.graph which neighbor graph should be used? (<name of reduction_snn OR nn>)
+#' @param name.graph which neighbor graph should be used? (name of reduction_snn OR nn)
 #' @param dims number of dimensions to use for clustering
 #' @export optimal_n_cluster
 optimal_n_cluster<-function(x,out=new("nbclust"),method="kmeans",index="all",min.nc=2,max.nc=15,only.meta=F,name.graph="SCT_snn",dims=1:30)
