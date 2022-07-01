@@ -8,6 +8,7 @@
 #' The Databases used here were downloaded in July 2021.
 #' Function adapted from scripts of Jonas Schrepping/DZNE.
 #' @param object Seurat Object
+#' @param genelist A custom gene list to perform GOEA on (f.e from GRN analysis). Needs to contain at least cluster annotation. required columns: gene, cluster (cluster annotation) optional:Condition
 #' @param condition name of column in metadata to use
 #' @param top Number of genes from FindAllMarkers to use for GSEA
 #' @param GeneSets which database to search (possible: GO,DO,KEGG,(from MSigDb:) Hallmark,cannonicalPathways,ImmunoSignatures,(Transcription Factor)Motifs)
@@ -22,7 +23,8 @@
 #' @param human_ensembl,mouse_ensembl use useMart("ensembl",dataset="...") to load the human and mouse databases
 #' @param up should the upregulated or downregulated genes be used?
 #' @export
-GSEA <- function(object,
+GSEA <- function(object=NULL,
+                 genelist=NULL,
                    condition ="Genotype",#name of column in metadata to use
                    top=50, #top genes from FindAllMarkers
                    GeneSets ="GO",# which database to search (possible: GO,DO,KEGG,(from MSigDb:) Hallmark,cannonicalPathways,ImmunoSignatures,(Transcription Factor)Motifs)
@@ -45,6 +47,8 @@ GSEA <- function(object,
 
     markers<-list()
 
+if(length(genelist)==0)
+{
     # DE genes for single cluster
     if(total==F){
       for (i in levels(Seurat::Idents(tmp))){
@@ -90,7 +94,12 @@ GSEA <- function(object,
       top<-dplyr::left_join(top,entrez,by=c("gene"="SYMBOL"))
 
     }
+}else{
+  top<-genelist
+  entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
 
+  top<-dplyr::left_join(top,entrez,by=c("gene"="SYMBOL"))
+}
     results <- list()
 
 

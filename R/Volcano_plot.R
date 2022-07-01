@@ -37,7 +37,7 @@ custom_col<-NULL
 
 
   plot<-do.call(EnhancedVolcano::EnhancedVolcano,args=c(list(toptable=x,
-                                            lab=rownames(x),
+                                            lab=x$gene,
                                             x="avg_log2FC",
                                             y="p_val_adj",
                                             labSize=lab.size,

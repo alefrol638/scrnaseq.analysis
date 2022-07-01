@@ -11,11 +11,19 @@
 #' @param label.stack,label.total Should the number of cells be displayed in each stack (cluster), or above bar (total), respectively?
 #' @param legend.key.size,legend.text.size,legend.position Appearance of legend (See ggplot2)
 #' @export
-abs_by_cond<-function(seuratobject,condition1,condition2,use_cols=NULL,font.total=3,legend.key.size=1,legend.text.size=4,legend.position="right",font.stack=1.5,axis.text.size=7,ctrl.group1=NA,control.group2=NA,label.stack=T,label.total=T,title="Cluster Abundances")
+#'
+#'
+
+abs_by_cond<-function(seuratobject,condition1,condition2=NA,multi_cond=F,use_cols=NULL,font.total=3,legend.key.size=1,legend.text.size=4,legend.position="right",font.stack=1.5,axis.text.size=7,ctrl.group1=NA,ctrl.group2=NA,label.stack=T,label.total=T,title="Cluster Abundances")
 {###extract frequencies of each seurat clusters splitted into conditions as table from Seurat object total
+  if(multi_cond){
   table_cluster<-table(Idents(seuratobject),seuratobject@meta.data[[condition1]],seuratobject@meta.data[[condition2]])
+  }else{ table_cluster<-table(Idents(seuratobject),seuratobject@meta.data[[condition1]])
+}
   table_frame<- as.data.frame(table_cluster)
+  if(multi_cond){
   colnames(table_frame)<-c("Seurat_cluster",condition1,condition2,"Freq")
+  }else{colnames(table_frame)<-c("Seurat_cluster",condition1,"Freq")}
   if(!is.na(ctrl.group1)){
   table_frame[[condition1]]<-relevel(table_frame[[condition1]],ctrl.group1)
   }
@@ -24,10 +32,18 @@ abs_by_cond<-function(seuratobject,condition1,condition2,use_cols=NULL,font.tota
     table_frame[[condition2]]<-relevel(table_frame[[condition2]],ctrl.group2)
   }
   ####required for the total cell number labels in the plot later
+  if(multi_cond){
   table_geno<-table(seuratobject@meta.data[[condition1]],seuratobject@meta.data[[condition2]])
   table_geno<- as.data.frame(table_geno)
   table_geno$Seurat_cluster<-""
+
   colnames(table_geno)<-c(condition1,condition2,"Freq","Seurat_cluster")
+  }else{table_geno<-table(seuratobject@meta.data[[condition1]])
+  table_geno<- as.data.frame(table_geno)
+  table_geno$Seurat_cluster<-""
+
+  colnames(table_geno)<-c(condition1,"Freq","Seurat_cluster")}
+
   if(!is.na(ctrl.group1)){
   table_geno[[condition1]]<-relevel(table_geno[[condition1]],ctrl.group1)
   }
@@ -41,8 +57,9 @@ abs_by_cond<-function(seuratobject,condition1,condition2,use_cols=NULL,font.tota
 
 
   # Columns you want to group by
+  if(multi_cond){
   grp_cols <- c(condition1,condition2)
-
+}else{grp_cols <- c(condition1)}
   # Convert character vector to list of symbols
   dots <- lapply(grp_cols, as.symbol)
 
@@ -66,15 +83,20 @@ abs_by_cond<-function(seuratobject,condition1,condition2,use_cols=NULL,font.tota
   graph_list_g<-list()
   ###you need to have the same number colors for the clusters otherwise NA will be shown
   # my_cols2<-my_cols2[-c(17,18,19)]
-
-  graph_list_g<-lapply(plot_list_g,scRNAseq.analysis::draw_plot,ylab="rel. Abundance",xlab="",
-                       plot=geom_col(),cluster_colors = use_cols,do.facet=T,facet=paste("~",condition2,sep=""))
+  graph_list_g<-do.call(lapply,c(list(X=plot_list_g,
+                        FUN=scRNAseq.analysis::draw_plot,
+                        ylab="rel. Abundance",xlab="",
+                        plot=geom_col(),cluster_colors = use_cols),
+                   list(do.facet=T,facet=paste("~",condition2,sep=""))[multi_cond]
+                        ))
+  # graph_list_g<-lapply(plot_list_g,scRNAseq.analysis::draw_plot,ylab="rel. Abundance",xlab="",
+  #                      plot=geom_col(),cluster_colors = use_cols,do.facet=T,facet=paste("~",condition2,sep=""))
 
   ###plot with percentages and absolute cell numbers across conditions and cell clusters
   cluster_abs<-graph_list_g$Seurat_cluster.col+ggplot2::theme(legend.key.size = unit(legend.key.size,"mm"),legend.text = ggplot2::element_text(size=legend.text.size),legend.position = legend.position,
                                                               axis.text.x = ggplot2::element_text(size=axis.text.size),axis.text.y = ggplot2::element_text(size=axis.text.size))+
     ggplot2::ggtitle(title)+ggprism::theme_prism()+
     {if(label.stack==T)ggplot2::geom_text(aes(label =paste(Freq,"cells",sep=" ")),  position = position_stack(vjust = 0.5),size=font.stack)}+
-    {if(label.total==T)ggplot2::geom_text(data=props_total_t,aes_string(label ="total",y="prop",x=condition),   vjust = -.25,size=font.total)}
+    {if(label.total==T)ggplot2::geom_text(data=props_total_t,aes_string(label ="total",y="prop",x=condition1),   vjust = -.25,size=font.total)}
   return(cluster_abs)
 }
