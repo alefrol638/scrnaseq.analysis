@@ -599,48 +599,8 @@ Since we know the identities of our clusters, we can check the differences betwe
 ```{r abundance}
 
 ####Cluster cell numbers####
+cluster_abs<-scRNAseq.analysis::abs_by_cond(Seurat_objects$processed)
 
-###extract frequencies of each seurat clusters splitted into genotypes as table from Seurat object total
-table_cluster<-table(Seurat_objects$processed@active.ident,Seurat_objects$processed$Genotype)
-table_frame<- as.data.frame(table_cluster)
-colnames(table_frame)<-c("Seurat_cluster","Genotype","Freq")
-table_frame$Genotype<-relevel(table_frame$Genotype,"WT")
-
-####required for the total cell number labels in the plot later
-table_geno<-table(Seurat_objects$processed$Genotype)
-table_geno<- as.data.frame(table_geno)
-table_geno$Seurat_cluster<-"act. MG"
-colnames(table_geno)<-c("Genotype","Freq","Seurat_cluster")
-table_geno$Genotype<-relevel(table_geno$Genotype,"WT")
-
-
-#####relative cell numbers 
-
-
-##compare Genotype 
-
-###total cell numbers
-props_total_t<-table_geno%>%dplyr::group_by(Genotype)%>%dplyr::mutate(total=sum(Freq),prop=sum(Freq/sum(Freq)))
-
-### cell percentage for each cluster
-
-props_total_g<-table_frame%>%dplyr::group_by(Genotype)%>%dplyr::mutate(prop=Freq / sum(Freq))
-props_total_g<-as.data.frame(props_total_g)
-
-
-plot_list_g<-list()
- plot_list_g<-sapply(colnames(props_total_g),gen_plots,data=props_total_g,list=plot_list_g,xvalue="Genotype",yvalue="prop")
- # names(plot_list_g)<-colnames(props_total_g)
- ##we need only the plot for the clusters splitted into genotypes
- plot_list_g<-plot_list_g[c(1)]
- 
- graph_list_g<-list()
- ###you need to have the same number colors for the clusters otherwise NA will be shown 
- my_cols2<-my_cols2[-c(17,18,19)]
- graph_list_g<-lapply(plot_list_g,scRNAseq.analysis::draw_plot,ylab="rel. Abundance",xlab="",plot=geom_col(),cluster_colors = my_cols2)
-###plot with percentages and absolute cell numbers across genotypes and cell clusters 
-cluster_abs<-graph_list_g$Seurat_cluster.col+geom_text(aes(label =paste(Freq,"cells",sep=" ")),  position = position_stack(vjust = 0.5),size=2)+geom_text(data=props_total_t,aes(label =total,y=prop,x=Genotype),   vjust = -.25,size=3)
-# 
 saveRDS(cluster_abs,here::here("figures","cluster_abs.RDS"))
 plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype")+theme(title = element_text(size=9)),DimPlot(Seurat_objects$processed,cols = my_cols2,label=T)+NoLegend(),cluster_abs)
 
@@ -717,7 +677,7 @@ ontology_db<-c("GO","KEGG","DO","Hallmark","cannonicalPathways","Motifs","Immuno
 
 Seurat_objects$processed$seurat_clusters<-Idents(Seurat_objects$processed)
 ontology[["nogeno"]]<-NULL
-ontology[["nogeno"]]<-foreach(i=ontology_db,.errorhandling = "remove",.combine=c,.multicombine = T) %dopar% {
+ontology[["nogeno"]]<-foreach(i=ontology_db,.errorhandling = "pass",.combine=c,.multicombine = T) %dopar% {
 R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "seurat_clusters",top = 50,GeneSets = i,total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)},
                     timeout = 180,cpu=F,onTimeout = "silent")
 
@@ -932,7 +892,7 @@ grid.arrange(arrangeGrob(allVolcano,
 
 
 
-processed<-Seurat_objects$processed
+# processed<-Seurat_objects$processed
 
 
   # saveRDS(Volcano_plots,here::here("RImages/SeqWell_myeolid/Exp_191114","Volcano_plots.RDS"))
