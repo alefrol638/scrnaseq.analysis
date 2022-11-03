@@ -11,9 +11,12 @@
 #' @param selected_genes Genelabel you want to appear in the plot
 #' @param dot.size size of dots representing each gene in plot
 #' @param highlight_genes character vector of genes to be highlighted with with red color
+#' @param x_axis,y_axis Which columns from table x should be used for visualization (e.g padjust or logFC), this values will be transformed (e.g -log for padjust )
+#' @param y_title if not adj p value, what have you used for statistical testing (f.e bayes factor)
 #' @export
 Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F,
-                       lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1,highlight_genes=NULL){
+                       lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1,highlight_genes=NULL,
+                       x_axis,y_axis,y_title=bquote(~-Log[10] ~ italic(P))){
   # define custom color for conditions
 
 custom_col<-NULL
@@ -36,10 +39,11 @@ custom_col<-NULL
  }
 
 
-  plot<-do.call(EnhancedVolcano::EnhancedVolcano,args=c(list(toptable=x,
-                                            lab=rownames(x),
-                                            x="avg_log2FC",
-                                            y="p_val_adj",
+ plot<-do.call(EnhancedVolcano::EnhancedVolcano,args=c(list(toptable=x,
+                                            lab=x$gene,
+                                            x=x_axis,
+                                            y=y_axis,
+                                            ylab=y_title,
                                             labSize=lab.size,
                                             title=titles,
                                             titleLabSize=title.size,

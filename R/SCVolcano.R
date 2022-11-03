@@ -7,7 +7,7 @@
 #' @param allvs1 should just marker genes for each cluster be found (see Seurat::FindAllMarkers())
 #' @param test which stastitical test to use: wilcoxon Rank sum, DESeq2, MAST, ... (see Seurat::FindAllMarkers())
 #' @export
- SCVolcano<-function(x,Condition,cond1,cond2,logfc=0.1,min.pct=0.1,allvs1=T,test="wilcox.test",only.pos=F){
+ SCVolcano<-function(x,Condition,cond1,cond2,logfc=0.1,min.pct=0.1,allvs1=T,test="wilcox",only.pos=F){
 
 dataset.markers<-list()
 

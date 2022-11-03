@@ -6,6 +6,7 @@
 \usage{
 GSEA(
   object,
+  genelist = NULL,
   condition = "Genotype",
   top = 50,
   GeneSets = "GO",
@@ -26,6 +27,8 @@ GSEA(
 }
 \arguments{
 \item{object}{Seurat Object}
+
+\item{genelist}{A custom gene list to perform GOEA on (f.e from GRN analysis). Needs to contain at least cluster annotation. required columns: gene, cluster (cluster annotation) optional:Condition}
 
 \item{condition}{name of column in metadata to use}
 
