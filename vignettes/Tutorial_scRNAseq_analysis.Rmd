@@ -55,7 +55,7 @@ my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
 
 ```
 
-Then we need to load the Mart datasets to be able to retrieve more information about our genes. 
+Then we need to load the Mart datasets to be able to retrieve more information about our genes.
 
 ```{r}
 
@@ -66,7 +66,7 @@ human_ensembl<-biomaRt::useMart("ensembl", dataset = "hsapiens_gene_ensembl")
 
 ```
 
-# Import Data 
+# Import Data
 
 Then we import the matrices from a DropSeq pipeline output folder:
 
@@ -82,7 +82,6 @@ Seurat_objects$total<-read_mtx(dir=dir_RNA)
 
 ```
 
-
 Or import SmartSeq2 Data using import_SS2_kallisto():
 
 ```{r SS2_kallisto,eval=F}
@@ -92,9 +91,10 @@ mouse_ensembl<-biomaRt::useMart("ensembl", dataset = "mmusculus_gene_ensembl")
 ###same as above: --bind /groups/NovaSeq-01/bioinformatics/RNA/124_2019_SS2_Beyer_CNS_TCells_210414:/data/SS2/190613
 Seurat_objects$SS2_190613<-import_SS2_kallisto("/data/SS2/190613/alignment/2021-04-15--17-09-37/output/kallisto",mouse_ensembl)
 ```
-# Metadata 
 
-The Metadata in our case is directly contained in the Cell name, thus we can just extract it: 
+# Metadata
+
+The Metadata in our case is directly contained in the Cell name, thus we can just extract it:
 
 ```{r Meta}
 
@@ -104,7 +104,7 @@ meta<-meta[,-1]
 Seurat_objects$total<-AddMetaData(Seurat_objects$total,meta)
 ```
 
-We can furthermore add the Percentage of mitochondrial genes: 
+We can furthermore add the Percentage of mitochondrial genes:
 
 ```{r percent.mito}
 
@@ -121,10 +121,12 @@ Seurat_objects$total<-MetaFeature(Seurat_objects$total,features = as.character(m
 
 
 ```
-# QC 
+
+# QC
 
 ## Alignment Quality
-First check the alignment quality: 
+
+First check the alignment quality:
 
 ```{r Alignment_QC}
 
@@ -143,6 +145,7 @@ Here you can see that all the subsamples from our dataset show similar alignment
 ## Composition
 
 We can also check the composition of our transcripts:
+
 ```{r composition}
 
 ### To find the biotypes of transcripts a Biomart object is required. Lets use the one from above
@@ -155,8 +158,7 @@ We can also check the composition of our transcripts:
    
 ```
 
-
-You can see that the majority of transcripts are protein coding genes. Other Transcript types may not be very informative, thus we leave them out for clustering and cluster annotation. Furthermore we'll remove ribosomal genes, which are also less informative but highly expressed: 
+You can see that the majority of transcripts are protein coding genes. Other Transcript types may not be very informative, thus we leave them out for clustering and cluster annotation. Furthermore we'll remove ribosomal genes, which are also less informative but highly expressed:
 
 ```{r proteins_only}
 ###lets find all genes annotated as rRNA in biomart 
@@ -180,10 +182,10 @@ Seurat_objects$filtered<-subset(Seurat_objects$total,features=filt_genes)
    
 ```
 
-
-## Cells 
+## Cells
 
 Now lets include low quality cells. We start with removing empty wells:
+
 ```{r Cell}
 ###save our data in extra object, so we do not loose the previous state, when trying different subsetting criteria.
 dataset<-Seurat_objects$filtered
@@ -195,12 +197,10 @@ dataset<-Seurat_objects$filtered
 dataset<-subset(dataset,subset = nCount_RNA>40)
 ```
 
+These are all cells, in which the cell size (rank here) is not proportional to the \#UMIs (all cells below red dotted line).
 
+Another posibility to look at the quality of cells is the following plot:
 
- These are all cells, in which the cell size (rank here) is not proportional to the #UMIs (all cells below red dotted line).
- 
- Another posibility to look at the quality of cells is the following plot: 
- 
 ```{r umis_cell_color}
 
 dataset<-subset(dataset,subset=nFeature_RNA>370&nCount_RNA>500)
@@ -211,19 +211,16 @@ dataset<-subset(dataset,subset=nFeature_RNA>370&nCount_RNA>500)
 
 ```
 
+You should try to remove the tails in the histogram, so that we keep only high quality cells. Here we subsetted for at least 370 genes and 500 Umis. No cells with high percent mitochondrial were observed in the lower left quadrant and the mito content is generally low. Thus we do not need to subset for percent.mito.
 
-You should try to remove the tails in the histogram, so that we keep only high quality cells. Here we subsetted for at least 370 genes and 500 Umis.
-No cells with high percent mitochondrial were observed in the lower left quadrant and the mito content is generally low. Thus we do not need to subset for percent.mito.
+# Dimensionality Reduction and Clustering
 
-# Dimensionality Reduction and Clustering 
+We still have to exclude doublets and correct for ambient gene expression. But for this steps a first clustering result should be available. Thus we first start with dimensionality reduction and clustering. The scRNAseq analysis is split into 3 Parts:
 
-We still have to exclude doublets and correct for ambient gene expression. But for this steps a first clustering result should be available. Thus we first start with dimensionality reduction and clustering.
-The scRNAseq analysis is split into 3 Parts:
-
-- PCA
-- Find Neighbors
-- UMAP
-- Clustering 
+-   PCA
+-   Find Neighbors
+-   UMAP
+-   Clustering
 
 Here we use a wrapper function for all these parts called seurat_flow().
 
@@ -245,7 +242,7 @@ To determine the number of dimensions to use, check the elbow in ElbowPlot().
 
 ## Clustering
 
-We have performed clustering using the standard resolution of 0.7. Let's see if we can make a more educated guess on the number of cluster available in our dataset. \
+We have performed clustering using the standard resolution of 0.7. Let's see if we can make a more educated guess on the number of cluster available in our dataset.\
 To that purpose, two packages can be made use of. The first one is called clustree and it just shows us a graph like comparison between the different clustering resolutions. The resolution is selected at the point, when the clusters (nodes) start to mix up between resolutions (mixed edges).
 
 ```{r, clustree}
@@ -275,10 +272,7 @@ Idents(Seurat_objects$postQC)<-Seurat_objects$postQC[["SCT_snn_res.0.4"]]
 
 ```
 
-
-You can see that there are singular mixes in low resolution and from 0.7 there appear to be slightly less stability. Since we still need to do some QC, lets not go into much detail and take for now resolution 0.4, where the clusters were stable for two resolutions.
-For doublet and ambient gene correction, we also need to check if the cluster roughly make sense. So let's just quickly check the umap and marker genes.
-
+You can see that there are singular mixes in low resolution and from 0.7 there appear to be slightly less stability. Since we still need to do some QC, lets not go into much detail and take for now resolution 0.4, where the clusters were stable for two resolutions. For doublet and ambient gene correction, we also need to check if the cluster roughly make sense. So let's just quickly check the umap and marker genes.
 
 ```{r Marker genes}
 library(dplyr)
@@ -298,11 +292,12 @@ plot_grid(DoHeatmap(Seurat_objects$postQC, features = top_genes$postQC$gene)+NoL
 
 
 ```
+
 You can see, that the cluster are not mixed up and the marker genes make sense.
 
 ## Correct Ambient Genes
 
-Ambient genes are especially abundant in droplet or pico-well Sequencing technologies. Thus, it is advisable to perform correction for ambient genes for this dataset (SeqWell, pico-well). \
+Ambient genes are especially abundant in droplet or pico-well Sequencing technologies. Thus, it is advisable to perform correction for ambient genes for this dataset (SeqWell, pico-well).\
 To that purpose we can use the tool SoupX (constantAmateur/SoupX). Here a wrapper function is used ... which extracts the count data from our unfiltered raw dataset and the QC post dataset, with preliminary clusters. The clustering beforehand is required for automatic SoupX correction.
 
 ```{r}
@@ -315,7 +310,7 @@ plot_grid(umis_genes_color(Seurat_objects$postQC),umis_genes_color(Seurat_object
 
 ```
 
-From this plot we can see, that the maximal estimated contamination fraction is 3%, which lays in the range of expected contamination in SeqWell experiments. \
+From this plot we can see, that the maximal estimated contamination fraction is 3%, which lays in the range of expected contamination in SeqWell experiments.\
 
 ```{r,warning=F,results="hide",warning=F,error=F,message=F}
 
@@ -326,7 +321,6 @@ Seurat_objects$nosoup<-seurat_flow(Seurat_objects$nosoup,res=0.4,dim=1:21,umap="
 
 plot_grid(umis_genes_color(Seurat_objects$postQC),umis_genes_color(Seurat_objects$nosoup), labels = c("Pre-correction","Post-correction"))
 ```
-
 
 You can already see a huge difference in the QC metrics. It seems that cells with very high number of genes and UMIs mainly contained information about ambient genes. The correction, made also the cells more comparable, bringing them into a similar range. Let's also check the clustering. Here the UMAPs:
 
@@ -341,7 +335,7 @@ plot_grid(DimPlot(Seurat_objects$postQC,label=T)+NoLegend()+NoAxes(),DimPlot(Seu
 
 ```
 
-You can see that we find more clusters with the same resolution and the clusters found before separate also better after correction. Lets check The marker genes as well: 
+You can see that we find more clusters with the same resolution and the clusters found before separate also better after correction. Lets check The marker genes as well:
 
 ```{r}
 
@@ -349,11 +343,12 @@ plot_grid(DoHeatmap(Seurat_objects$postQC, features = top_genes$postQC$gene)+NoL
 
 ```
 
-The marker genes are similar, although after correction  Nfkbia and Mrc1 appear, which tell us more about the state (Nfkb=Inflammation) and identity (Mrc1 = Macrophage) of certain populations.
+The marker genes are similar, although after correction Nfkbia and Mrc1 appear, which tell us more about the state (Nfkb=Inflammation) and identity (Mrc1 = Macrophage) of certain populations.
 
 ## Doublet removal
 
 It is recommended to perform doublet detection separately on each of the present conditions. In our case, we perform the detection on the Genotypes WT and KO. Prior to run the wrapper function for DoubletFinder, the QC for the separate Genotypes might be adjusted slightly and uninformative clusters removed. I will not go here into detail, because the major steps were already explained above:
+
 ```{r,warning=F,results="hide",error=F,message=F}
 Seurat_objects[c("WT","KO")]<-NULL
 Genotypes<-SplitObject(Seurat_objects$nosoup,split.by = "Genotype")
@@ -444,9 +439,8 @@ Seurat_objects$KO <- Seurat_objects$KO[, which(expr == "Singlet")]
 
 ```
 
-
 The number of doublets is low in this datasets, let's remove the ones which were found.\
-Lets now merge again the corrected Genotypes together: 
+Lets now merge again the corrected Genotypes together:
 
 ```{r}
 ###The Genotypes were merged after ambient gene and Doublet removal
@@ -500,7 +494,7 @@ Seurat_objects$processed<- FindClusters(Seurat_objects$processed, resolution = i
   
 ```
 
-Now that we have are completely QC corrected dataset, Let's use the Nbclust tool to determine the optimal number of clusters. Nbclust performs a validation for the optimal number of cluster, using 33 Tools. The function optimal_n_cluster is a wrapper. It first executes NBclust with all available tools in parallel and then saves the results in class "nbclust": 
+Now that we have are completely QC corrected dataset, Let's use the Nbclust tool to determine the optimal number of clusters. Nbclust performs a validation for the optimal number of cluster, using 33 Tools. The function optimal_n\_cluster is a wrapper. It first executes NBclust with all available tools in parallel and then saves the results in class "nbclust":
 
 ```{r Nbclust}
 
@@ -512,11 +506,12 @@ optimal_clusters@top3
 DimPlot(Seurat_objects$processed)
 ```
 
-One could sometimes also find plots in optimal_clusters@plots, here it did not work. But the top 3 number of clusters from all the tools ,were 10,14,12 clusters. Together with the results of nbclust, 10 clusters seems to be optimal. Upon visual inspection of the UMAP, further subgroups in the clusters 3,4,5,1 and 9 were found, which we were not able to separate, when considering all cells. For these cells we can perform subclustering:
+One could sometimes also find plots in [optimal_clusters\@plots](mailto:optimal_clusters@plots){.email}, here it did not work. But the top 3 number of clusters from all the tools ,were 10,14,12 clusters. Together with the results of nbclust, 10 clusters seems to be optimal. Upon visual inspection of the UMAP, further subgroups in the clusters 3,4,5,1 and 9 were found, which we were not able to separate, when considering all cells. For these cells we can perform subclustering:
 
-## Subclustering 
+## Subclustering
 
 Lets first remove T cells from analysis:
+
 ```{r Tcells,warning=F,results="hide",error=F,message=F}
 ###set best resolution
 cluster_ids<-list()
@@ -553,7 +548,7 @@ DimPlot(Seurat_objects$processed,label=T)
   
 ```
 
-Now you can see, that all cluster capture one homogenous cell group in the UMAP (at least visually). Now we can identify the clusters: 
+Now you can see, that all cluster capture one homogenous cell group in the UMAP (at least visually). Now we can identify the clusters:
 
 ```{r annotation}
   
@@ -591,10 +586,9 @@ my_cols2 <- my_cols[order(as.integer(names(my_cols)))]
    plot_grid(DoHeatmap(Seurat_objects$processed,top_genes$processed$gene,group.colors = my_cols2)+NoLegend(),DimPlot(Seurat_objects$processed,label = T,cols = my_cols2)+NoAxes()+NoLegend())
 ```
 
+## Cluster abundances
 
-## Cluster abundances 
-
-Since we know the identities of our clusters, we can check the differences between the genotypes, lets first create a Barplot showing the cluster abundances: 
+Since we know the identities of our clusters, we can check the differences between the genotypes, lets first create a Barplot showing the cluster abundances:
 
 ```{r abundance}
 
@@ -611,8 +605,8 @@ plot_grid(DimPlot(Seurat_objects$processed,group.by = "Genotype")+theme(title = 
 
 ## DE Genes & GOEA
 
-
 First we need to extract all genes in the dataset and translate them into EntrezID, this genes will than be used as background for significance testing in the GSEA function:
+
 ```{r GOEA}
 
 ##check if non protein coding genes give additional information
@@ -659,7 +653,6 @@ rm(background_hsa)
 
 ```
 
-
 In single cell experiments, there are multiple possibilites, which genes to take for GSEA. First, the marker genes of the single cell clusters can be used to confirm our annotation. Seurat::FindMarkers() will be used on the condition variable, which is in our case the cell clusters, total is set to TRUE, so that the Idents are only considered once.\
 There are 5 available databases "GO","KEGG","DO","Hallmark","cannonicalPathways","Motifs","ImmunoSignatures". Lets take all of them and perform GSEA in parallel using foreach :
 
@@ -687,8 +680,8 @@ R.utils::withTimeout({scRNAseq.analysis::GSEA(object = Seurat_objects$processed,
 ontology$nogeno["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processed,condition = "seurat_clusters",top = 50,GeneSets = "GO",total = T,OrgDb = OrgDb,human_ensembl = human_ensembl,mouse_ensembl = mouse_ensembl)
 ```
 
-
 Furthermore, DE genes between Genotypes can be used for GSEA. Here our condition is the Genotype meta data variable, and total=T needs to be set, so that the single cell clusters are not considered in the analysis:
+
 ```{r GOEA_total}
 
 
@@ -708,6 +701,7 @@ ontology[["total"]]<-foreach(i=ontology_db,.errorhandling="remove",.combine=c,.m
 ```
 
 Finally, the DE Genes between Genotypes in each clustered can be used for GSEA, by setting total=F:
+
 ```{r GOEA_Cluster}
 ###Then scRNAseq.analysis::GSEA for each cluster individually
 ontology[["cluster"]]<-NULL
@@ -724,7 +718,8 @@ ontology$cluster["GO"]<-scRNAseq.analysis::GSEA(object = Seurat_objects$processe
 
 ```
 
-Lets only put WT on the left side of the plot: 
+Lets only put WT on the left side of the plot:
+
 ```{r GOEA_relevel}
 
 ###relevel the genotype, so that WT appears on left side 
@@ -739,7 +734,9 @@ ontology[["cluster"]][[i]]@compareClusterResult[["Condition"]]<-relevel(ontology
 }
 
 ```
+
 We created now only GSEA objects. To visualise the results dotplot can be used, here we can create a list of ggplots, so that we don't need to run ggplot for each database:
+
 ```{r GOEA_dotplots_all}
 ### Create dotplots 
 ###create dotplots for all the ontologies created above 
@@ -778,6 +775,7 @@ ontology_plots[["nogeno"]]<-foreach(i=names(ontology$nogeno),.packages = c("clus
 ```
 
 Using plot_grid, multiple results dotplots can be visualised at once. For each type of marker genes we used, an entry in the ontology_plots list was created. The next level in the list are the single databases, they can be accessed by name or position:
+
 ```{r GOEA_dotplots}
 ###plot all in one: probably too much, thus need to subset: here only plot 7 will be plotted
 levels(Idents(Seurat_objects$processed))
@@ -788,6 +786,7 @@ plot_grid(plotlist = ontology_plots$cluster[c(1:3)])
 ```
 
 In the same way, a network visualisation can be used:
+
 ```{r GOEA_emaplots}
 ###for visualisation as a network package enrichplot required
 library(enrichplot)
@@ -827,8 +826,8 @@ plot_grid(plotlist = emaplots$nogeno["GO"])
 
 ```
 
-
 ## Volcano Plots
+
 ```{r Volcanos}
 ####Volcano Plots ####
 
@@ -898,5 +897,3 @@ grid.arrange(arrangeGrob(allVolcano,
   # saveRDS(Volcano_plots,here::here("RImages/SeqWell_myeolid/Exp_191114","Volcano_plots.RDS"))
 
 ```
-
-
