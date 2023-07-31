@@ -4,8 +4,9 @@
 #' @param x_raw SeuratObject containing bad quality cells (before QC processing)
 #' @param cluster Cluster identity for each cell (standard will take active Idents from SeuratObject x)
 #' @param meta.cols columns from metadata to keep (see x[[]])... do not keep nCount_RNA and nFeature_RNA... needs to be recalculated
+#' @param soupQuantile,tfidfMin Parameters for defining soup
 #' @export
-remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7))
+remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7),soupQuantile=0.9,tfidfMin=1)
 {
   dataset<-x
 
@@ -18,11 +19,11 @@ remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7))
 
 
   #Create soupx object
-  sc = SoupX::SoupChannel(total_counts_raw,total_counts_norm,)
+  sc = SoupX::SoupChannel(total_counts_raw,total_counts_norm)
   #take cluster from processed dataset
   sc =  SoupX::setClusters(sc,cluster)
   # estimate contaimation with ambient genes
-  sc =  SoupX::autoEstCont(sc)
+  sc =  SoupX::autoEstCont(sc,tfidfMin = tfidfMin,soupQuantile = soupQuantile)
   # correct for ambient genes
   out_soup<-  SoupX::adjustCounts(sc)
 

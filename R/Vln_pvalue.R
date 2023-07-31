@@ -9,7 +9,8 @@
 #' @param slot which slot in the assay to use, possible: "counts", "data" or "scale.data"
 #' @param log are the values in Violin plot represented in a logarithmic scale
 #' @export
-Vln_pvalue<-function(SeuratObject,gene,Condition,DEGs,split="filler",assay="RNA",slot="counts",log=T){
+#'
+Vln_pvalue<-function(SeuratObject,gene,Condition=NULL,DEGs,split="filler",assay="RNA",slot="counts",log=T){
 
   dataset.markers<-list()
   ###create test object, with positions for p values in plot
@@ -21,6 +22,7 @@ Vln_pvalue<-function(SeuratObject,gene,Condition,DEGs,split="filler",assay="RNA"
   if(log==T){
     count.data<-log(count.data,10)
   }
+  if(!is.null(Condition)){
   vln_df = data.frame(expr = count.data[gene,], cluster = Idents(SeuratObject),Condition = SeuratObject[[Condition]])
   names(vln_df)[3]<-"Condition"
   # ggplot(vln_df,aes(x=expr))+geom_histogram(aes(color=genotype),fill="white")+theme_prism()
@@ -30,7 +32,15 @@ Vln_pvalue<-function(SeuratObject,gene,Condition,DEGs,split="filler",assay="RNA"
     rstatix::group_by(cluster) %>%
     rstatix::wilcox_test(expr ~ Condition) %>%
     rstatix::add_xy_position(x = "cluster", dodge = 0.8) # important for positioning!
+  }else{
+    vln_df = data.frame(expr = count.data[gene,], cluster = Idents(SeuratObject))
+    # ggplot(vln_df,aes(x=expr))+geom_histogram(aes(color=genotype),fill="white")+theme_prism()
 
+    ##first calculate p value with rstatix, to get a rstatix test class and thus be able to calculate the position of the p values in the plot
+    vln_signif <- vln_df%>%
+      rstatix::wilcox_test(expr ~ cluster) %>%
+      rstatix::add_xy_position(x = "cluster", dodge = 0.8) # important for positioning!
+}
 
   #replace the p value calculated by the simple wilcoxon rank sum test with the p values received from FindMarkers(recommended to use MAST test method)
   dataset.markers$selected_genes[[gene]]<-DEGs[grep(gene,DEGs$gene,fixed=T),]
