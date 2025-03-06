@@ -16,7 +16,7 @@
 #' @export
 Volcano_plot<-function(x,Condition,p_cutoff=1e-05,FC_cutoff=1,legend="none",titles=levels(x$cluster),do.col=F,
                        lab.size=7,title.size=12,axis.font.size=7,selected_genes=NULL,dot.size=1,highlight_genes=NULL,
-                       x_axis,y_axis,y_title=bquote(~-Log[10] ~ italic(P))){
+                       x_axis="avg_log2FC",y_axis="p_val_adj",y_title=bquote(~-Log[10] ~ italic(P))){
   # define custom color for conditions
 
 custom_col<-NULL
@@ -61,5 +61,5 @@ custom_col<-NULL
                                        list(colCustom = geno_col)[do.col],
                                        list(colCustom = custom_col)[highlight_genes]
   ))
-
+return(plot)
 }

@@ -8,8 +8,11 @@
 #' @export
 remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7),soupQuantile=0.9,tfidfMin=1)
 {
-  dataset<-x
 
+  ###bugfix for error "  Error in quantile.default(soupProf$est, soupQuantile) :
+ # missing values and NaN's not allowed if 'na.rm' is FALSE "
+  ## This error appeared for me only in 10x datasets
+  dataset<-x
   # Extract count matrix from raw and QC processed seurat objects
   total_counts_raw<-Seurat::GetAssayData(object = x_raw, slot = 'counts')
   total_counts_norm<-Seurat::GetAssayData(object = dataset, slot = 'counts')
@@ -17,15 +20,29 @@ remove_ambient<-function(x,x_raw,cluster=Idents(x),meta.cols=c(1,4:7),soupQuanti
   #both matrices have to have the same number of genes
   total_counts_raw<-total_counts_raw[rownames(total_counts_raw) %in% rownames(total_counts_norm),]
 
+  cluster=Idents(dataset)
+
 
   #Create soupx object
-  sc = SoupX::SoupChannel(total_counts_raw,total_counts_norm)
-  #take cluster from processed dataset
-  sc =  SoupX::setClusters(sc,cluster)
-  # estimate contaimation with ambient genes
-  sc =  SoupX::autoEstCont(sc,tfidfMin = tfidfMin,soupQuantile = soupQuantile)
+  sc = SoupX::SoupChannel(tod = total_counts_raw,toc=total_counts_norm, keepDroplets = TRUE)
+  sc$tod<-total_counts_raw
+
+  toc = sc$toc
+  scNoDrops = SoupX::SoupChannel(toc, toc, calcSoupProfile = FALSE)
+  # Calculate soup profile
+  soupProf = data.frame(row.names = rownames(toc), est = rowSums(toc)/sum(toc), counts = rowSums(toc))
+  scNoDrops = SoupX::setSoupProfile(scNoDrops, soupProf)
+  sc =  SoupX::setClusters(scNoDrops,cluster)
+
+  head(sc$soupProfile[order(sc$soupProfile$est, decreasing = TRUE), ], n = 20)
+
+  #plotMarkerDistribution(sc)
+  sc =  SoupX::autoEstCont(sc#,soupQuantile=0.7,tfidfMin=0.7
+  )
+
   # correct for ambient genes
   out_soup<-  SoupX::adjustCounts(sc)
+
 
 
   #  bugfix do not take all the metadata from uncorrected dataset ... otherwise QC metrics scewed (e.g nCount_RNA, nFeature_RNA)

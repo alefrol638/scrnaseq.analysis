@@ -59,15 +59,17 @@ if(length(genelist)==0)
 
 
         markers[[i]] <-Seurat::FindAllMarkers(object = tmp2,only.pos = up,min.pct = min.pct,logfc.threshold = logfc.threshold)
+        if(dim(markers[[i]])!=0){
         colnames(markers[[i]])[6]<-"Condition"
         markers[[i]]$cluster<-as.factor(i)
+        }
 
       }
       markers<-do.call(rbind,markers)
       if(up==T){
-      markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_max(n = 50, order_by =  avg_log2FC) -> top
+      markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_max(n = top, order_by =  avg_log2FC) -> top
       }else{
-        markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers %>% dplyr::group_by(cluster,Condition) %>% dplyr::slice_min(n = top, order_by = avg_log2FC) -> top
         }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
@@ -84,9 +86,9 @@ if(length(genelist)==0)
 
       markers <- Seurat::FindAllMarkers(object = tmp, only.pos = T,min.pct = min.pct,logfc.threshold = logfc.threshold)
       if(up==T){
-        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_max(n = 50, order_by = avg_log2FC) -> top
+        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_max(n = top, order_by = avg_log2FC) -> top
       }else{
-        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = 50, order_by = avg_log2FC) -> top
+        markers %>% dplyr::group_by(cluster) %>% dplyr::slice_min(n = top, order_by = avg_log2FC) -> top
       }
 
       entrez <- clusterProfiler::bitr(top$gene, fromType = "SYMBOL", toType="ENTREZID",OrgDb = OrgDb)
