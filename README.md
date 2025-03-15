@@ -77,3 +77,7 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 
 Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html and open it 
 with your internet browser of choice.
+
+## How to cite
+
+Frolov, A., Schulte-Schrepping, J., Osei-Sarpong, C., Elmzzahi, T., Becker, M., & Beyer, M. D. (2025). scRNAseq.analysis-stable (0.0.1). Zenodo. https://doi.org/10.5281/zenodo.15017509
