@@ -8,7 +8,7 @@ Plots, GOEA, cluster abundances and other useful plots. Based on Jonas Schulte-S
 All the required packages are installed in docker image: alefrol94/scrnaseq.analysis.
 To start a R studio server session execute this on your remote server:
 
-```{bash}
+```bash
 ###create config folders and files, to be able to run locally (first fill in individual information)
 
 mkdir -p run var-lib-rstudio-server
@@ -25,7 +25,7 @@ PASSWORD=<yourPassword> singularity exec
 
 ```
 Alternatively in Docker: 
-```{bash}
+```bash
 
 docker run -d -p <localport>:<remote> -e PASSWORD=<yourPassword> -v = /home/user:/home/user alefrol94/scrnaseq.analysis:reticulate rserver --www-port=8787 --secure-cookie-key-file /home/user/tmp/r-server --server-daemonize=0
 
@@ -37,7 +37,7 @@ reticulate.
 
 start using the environment, f.e scvelo:
 
-```{r}
+```R
 reticulate::use_condaenv("scvelo")
 ```
 
@@ -54,20 +54,19 @@ The following environments are preinstalled:
 You can install this package outside of the docker container (including unresolved dependecies) using the remotes package and a deploy token registered for this repository. However, 
 you might need to install more packages which are not listed here:
 
-```{r}
+```R
 
 BiocManager::install("EnhancedVolcano",Ncpus=100)
 
 
 ###requires remotes version 2.3.0
-remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git",
-                     credentials=git2r::cred_user_pass("gitlab+deploy-token-8", "Li18nfcNd5bTZBgJkNzm"))
+remotes::install_git("https://gitlab.dzne.de/frolova/scrnaseq.analysis.git")
 
 ```
 
 if that does not work you probably need to install remotes version 2.3.0:
 
-```{r}
+```R
 
 require(devtools)
 install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.org")
@@ -77,6 +76,8 @@ install_version("remotes", version = "2.3.0", repos = "http://cran.us.r-project.
 ## Usage
 
 Please download the vignette from this repository under ./vignettes/Tutorial_scRNAseq_analysis.html and open it 
-with your internet browser of choice. Some functions have additional parameters not included in the vignette, please refer to the documentation.
+with your internet browser of choice.
 
-Vignettes for the usage of the conda environments are not available yet. Please refer to the official documentation of the respective packages for now. 
+## How to cite
+
+Frolov, A., Schulte-Schrepping, J., Osei-Sarpong, C., Elmzzahi, T., Becker, M., & Beyer, M. D. (2025). scRNAseq.analysis-stable (0.0.1). Zenodo. https://doi.org/10.5281/zenodo.15017509

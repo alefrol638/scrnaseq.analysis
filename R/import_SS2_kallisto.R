@@ -8,16 +8,19 @@
 #' @export
 import_SS2_kallisto<-function(dir,mart.use)
 {
-  samples<-list.files(paste(dir,"kallisto",sep = "/"))
+  files<-list.files(paste(dir,sep = "/"),pattern = "abundance.h5",recursive = T,ignore.case = F,include.dirs = F)
+  names(files)<-basename(dirname(files))
+  names(files)<-basename(dirname(files))
+  files<-paste(dir,files,sep = "/")
 
-  files<-paste(dir ,"kallisto",samples,"abundance.h5",sep="/")
-  names(files)<-samples
 
 
 
   tx2gene <- readr::read_csv(file.path(dir, "tx2genes.csv"))
 
   txi <- tximport::tximport(files, type = "kallisto", tx2gene = tx2gene,countsFromAbundance="lengthScaledTPM")
+  names(files)<-basename(dirname(files))
+
 
   ###translate ensembl ID to gene symbol
 
@@ -26,7 +29,7 @@ import_SS2_kallisto<-function(dir,mart.use)
 
   genes_names <- biomaRt::getBM(attributes = c("external_gene_name",
                                                "ensembl_gene_id"), filters = "ensembl_gene_id",
-                                values = rownames(txi$counts), mart = mart.use, useCache = F)
+                                values = rownames(txi$counts), mart = mart.use, useCache = T)
 
 
   ###keep only genes which were identified
@@ -40,9 +43,10 @@ import_SS2_kallisto<-function(dir,mart.use)
   rownames(mtx)<-make.names(mtx$external_gene_name, unique=TRUE)
   #remove gene names
   mtx<-mtx[,which(!colnames(mtx)%in%c("target_id","external_gene_name"))]
+  colnames(mtx)<-names(files)
+
   ##set NAs to 0
   mtx[is.na(mtx)]<-0
-
   seurat_total<-Seurat::CreateSeuratObject(mtx,project="SS2_lymphocytes",min.cells = 3)
 
   return(seurat_total)

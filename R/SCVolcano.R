@@ -44,6 +44,8 @@ for (i in levels(Idents(x))){
   ##comparison the two conditions, without considering single cluster (bulk DEG testing)
 Idents(x)<-x[[]][,Condition]
 dataset.markers$cond_total<-Seurat::FindMarkers(x,ident.1 = cond1,ident.2 = cond2,test.use=test,only.pos = only.pos)
+dataset.markers$cond_total$cluster<-as.factor(i)
+dataset.markers$cond_total$gene<-rownames(dataset.markers$cond_total)
 }
 
 return(dataset.markers)

@@ -5,8 +5,9 @@
 #' @param dataset Seurat Object
 #' @param color Name of the metadata column to use for colors in the plot. If FALSE no colorcoding will be performed.
 #' @param dot.size The size of the single cells, represented by dots, in the plot
+#' @param ColorHisto Should the adjacent histograms also be color coded? (only possible for discrete values)
 #' @export
-umis_genes_color<-function(dataset,color="percent.mito",dot.size=0.5,font.size=17,legend.font=14,legend.key=5){
+umis_genes_color<-function(dataset,color="percent.mito",dot.size=0.5,font.size=17,legend.font=14,legend.key=5,colorHisto=F){
   fvsu_mito<-as.data.frame(dataset$nCount_RNA)
   fvsu_mito$nFeature<-dataset$nFeature_RNA
   if(color!=F){
@@ -24,4 +25,4 @@ umis_genes_color<-function(dataset,color="percent.mito",dot.size=0.5,font.size=1
                  legend.key.size=legend.key)
 
   # add number of genes and number of UMIs histograms at the fringes
-  ggExtra::ggMarginal(ugm, type = "histogram",bins=150)}
+  ggExtra::ggMarginal(ugm, type = "histogram",bins=150,, groupColour = colorHisto, groupFill = colorHisto)}

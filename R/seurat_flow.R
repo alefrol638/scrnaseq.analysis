@@ -20,10 +20,11 @@ seurat_flow<-function(x,res=0.7,dim=1:30,sct=T,norm=F,do.pca=T,regress=NULL,alg=
 
   if(sct==T){
     x<-Seurat::SCTransform(x,do.correct.umi = UMIs,do.scale = scale,vars.to.regress = regress,return.only.var.genes = only.var)
+    graph<-"SCT_snn"
   }
   if(norm==T){
     x <- Seurat::NormalizeData(x,normalization.method=norm.method)
-
+    graph<-"RNA_snn"
     if(low.features==F)
     {x <- Seurat::FindVariableFeatures(x, selection.method = "vst", nfeatures = 5000)}
 
